@@ -15,6 +15,28 @@ class SandylandGame {
         this.gameState = 'SPLASH';
         this.stateStartTime = Date.now();
         
+        // Victory screen properties
+        this.victoryScreen = {
+            isActive: false,
+            title: "VICTORY!",
+            subtitle: "Papa Sandy Rescued His Corvette!",
+            celebrationTime: 0,
+            finalStats: {
+                score: 0,
+                time: 0,
+                enemiesDefeated: 0,
+                barriersDestroyed: 0,
+                powerUpsCollected: 0
+            },
+            showStats: false,
+            confetti: [],
+            corvetteX: 0,
+            corvetteY: 0,
+            papaSandyVictoryPose: 0,
+            cameraShake: 0,
+            screenFlash: 0
+        };
+        
         // Splash screen properties
         this.splashScreen = {
             title: "SANDYLAND",
@@ -237,14 +259,45 @@ class SandylandGame {
             tropicalEnergy: { duration: 6000, color: '#00FF00', name: 'Tropical Energy' }
         };
         
-        // Sound effects using Web Audio API
+        // Enhanced Sound effects using Web Audio API
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         this.sounds = {
-            collectPowerUp: this.createSound(440, 0.1, 'sine'),
-            jump: this.createSound(220, 0.1, 'triangle'),
-            rollTire: this.createSound(110, 0.2, 'sawtooth'),
-            destroyBarrier: this.createSound(330, 0.3, 'square'),
-            enemyDefeat: this.createSound(880, 0.1, 'sine')
+            // Enhanced collection sounds with chord progressions
+            collectPowerUp: () => this.playChord([440, 554, 659], 0.15, 'sine'), // A major chord
+            superTireCollect: () => this.playChord([523, 659, 784], 0.2, 'sine'),   // C major chord
+            medicalKitCollect: () => this.playChord([349, 440, 523], 0.15, 'sine'), // F major chord
+            
+            // Enhanced jump sounds with pitch bend
+            jump: () => this.playPitchBend(220, 440, 0.15, 'triangle'),
+            superJump: () => this.playPitchBend(330, 660, 0.2, 'triangle'),
+            
+            // Enhanced tire rolling with engine-like sounds
+            rollTire: () => this.playEngineSound(110, 0.3),
+            superRollTire: () => this.playEngineSound(165, 0.4),
+            
+            // Enhanced destruction sounds with reverb
+            destroyBarrier: () => this.playDestructionSound(330, 0.3),
+            barrierBreak: () => this.playDestructionSound(220, 0.4),
+            
+            // Enhanced enemy defeat sounds
+            enemyDefeat: () => this.playEnemyDefeat(880, 0.1),
+            enemyCrush: () => this.playEnemyDefeat(440, 0.15),
+            
+            // Victory and celebration sounds
+            victoryFanfare: null, // Will be set during victory
+            levelComplete: () => this.playLevelComplete(),
+            
+            // Environmental sounds
+            footstep: () => this.playFootstep(),
+            land: () => this.playLandSound(),
+            
+            // Enhanced power-up activation sounds
+            powerUpActivate: () => this.playPowerUpActivate(),
+            
+            // Game state sounds
+            gameOver: null, // Will be set during game over
+            pause: () => this.playPauseSound(),
+            resume: () => this.playResumeSound()
         };
         
         // Particle effects system
@@ -295,6 +348,12 @@ class SandylandGame {
                 e.preventDefault();
             }
             
+            // Handle victory screen progression
+            if (this.gameState === 'VICTORY' && e.code === 'Space') {
+                this.restartGame();
+                e.preventDefault();
+            }
+            
             e.preventDefault();
         });
         
@@ -307,7 +366,7 @@ class SandylandGame {
         setInterval(() => this.spawnPowerUp(), 15000);
     }
     
-    // Sound effect creation
+    // Enhanced Sound effect creation methods
     createSound(frequency, duration, waveType) {
         return () => {
             const oscillator = this.audioContext.createOscillator();
@@ -325,6 +384,224 @@ class SandylandGame {
             oscillator.start(this.audioContext.currentTime);
             oscillator.stop(this.audioContext.currentTime + duration);
         };
+    }
+    
+    // Play chord progression for richer sounds
+    playChord(frequencies, duration, waveType) {
+        frequencies.forEach((freq, index) => {
+            setTimeout(() => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                oscillator.type = waveType;
+                
+                gainNode.gain.setValueAtTime(0.05, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }, index * 50); // Stagger chord notes
+        });
+    }
+    
+    // Pitch bend effects for dynamic sounds
+    playPitchBend(startFreq, endFreq, duration, waveType) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(startFreq, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(endFreq, this.audioContext.currentTime + duration);
+        oscillator.type = waveType;
+        
+        gainNode.gain.setValueAtTime(0.08, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration);
+    }
+    
+    // Engine-like rolling sound
+    playEngineSound(baseFreq, duration) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        oscillator.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        // Create rumbling engine effect
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(baseFreq, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, this.audioContext.currentTime + duration);
+        
+        // Low-pass filter for rumble effect
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(200, this.audioContext.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(100, this.audioContext.currentTime + duration);
+        
+        gainNode.gain.setValueAtTime(0.06, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration);
+    }
+    
+    // Destruction sound with reverb effect
+    playDestructionSound(frequency, duration) {
+        // Primary sound
+        const oscillator1 = this.audioContext.createOscillator();
+        const oscillator2 = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator1.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+        oscillator1.type = 'square';
+        
+        oscillator2.frequency.setValueAtTime(frequency * 0.5, this.audioContext.currentTime);
+        oscillator2.type = 'sawtooth';
+        
+        gainNode.gain.setValueAtTime(0.08, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        
+        oscillator1.start(this.audioContext.currentTime);
+        oscillator2.start(this.audioContext.currentTime);
+        oscillator1.stop(this.audioContext.currentTime + duration);
+        oscillator2.stop(this.audioContext.currentTime + duration);
+    }
+    
+    // Enemy defeat sound with impact effect
+    playEnemyDefeat(frequency, duration) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        // Quick pitch drop for impact
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.3, this.audioContext.currentTime + duration);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.06, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration);
+    }
+    
+    // Level complete fanfare
+    playLevelComplete() {
+        const notes = [523, 659, 784, 1047]; // C, E, G, C (higher octave)
+        const durations = [0.2, 0.2, 0.3, 0.4];
+        
+        notes.forEach((freq, index) => {
+            setTimeout(() => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.08, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + durations[index]);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + durations[index]);
+            }, index * 150);
+        });
+    }
+    
+    // Footstep sound
+    playFootstep() {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(80, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(40, this.audioContext.currentTime + 0.05);
+        oscillator.type = 'sawtooth';
+        
+        gainNode.gain.setValueAtTime(0.03, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.05);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.05);
+    }
+    
+    // Landing sound
+    playLandSound() {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(150, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(60, this.audioContext.currentTime + 0.1);
+        oscillator.type = 'triangle';
+        
+        gainNode.gain.setValueAtTime(0.05, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.1);
+    }
+    
+    // Power-up activation sound
+    playPowerUpActivate() {
+        this.playChord([659, 831, 988], 0.3, 'sine'); // E major chord with higher notes
+    }
+    
+    // Pause sound
+    playPauseSound() {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.05, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.2);
+    }
+    
+    // Resume sound
+    playResumeSound() {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(880, this.audioContext.currentTime);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.05, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.2);
     }
     
     // Power-up spawning
@@ -349,10 +626,10 @@ class SandylandGame {
         this.powerUps.push(powerUp);
     }
     
-    // Particle effect system
-    createParticles(x, y, color, count = 10) {
+    // Enhanced Particle effect system
+    createParticles(x, y, color, count = 10, options = {}) {
         for (let i = 0; i < count; i++) {
-            this.particles.push({
+            const particle = {
                 x: x,
                 y: y,
                 vx: (Math.random() - 0.5) * 8,
@@ -360,7 +637,84 @@ class SandylandGame {
                 life: 30,
                 maxLife: 30,
                 color: color,
-                size: Math.random() * 4 + 2
+                size: Math.random() * 4 + 2,
+                gravity: 0.3,
+                bounce: options.bounce || 0.5,
+                fade: options.fade || true,
+                sparkle: options.sparkle || false,
+                trail: options.trail || false
+            };
+            
+            // Apply custom options
+            if (options.vx) particle.vx = options.vx;
+            if (options.vy) particle.vy = options.vy;
+            if (options.life) particle.life = particle.maxLife = options.life;
+            if (options.size) particle.size = options.size;
+            
+            this.particles.push(particle);
+        }
+    }
+    
+    // Special particle effects for key moments
+    createExplosion(x, y, color, count = 20) {
+        // Radial explosion effect
+        for (let i = 0; i < count; i++) {
+            const angle = (i / count) * Math.PI * 2;
+            const speed = Math.random() * 6 + 2;
+            this.createParticles(x, y, color, 1, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 40,
+                size: Math.random() * 6 + 3,
+                fade: true,
+                sparkle: true
+            });
+        }
+    }
+    
+    createMagicBurst(x, y, color = '#FFD700', count = 15) {
+        // Magical burst with spiral effect
+        for (let i = 0; i < count; i++) {
+            const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+            const speed = Math.random() * 4 + 1;
+            this.createParticles(x, y, color, 1, {
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 2, // Slight upward bias
+                life: 50,
+                size: Math.random() * 4 + 2,
+                fade: true,
+                sparkle: true
+            });
+        }
+    }
+    
+    createCelebrationBurst(x, y, colors, count = 25) {
+        // Multi-colored celebration burst
+        colors.forEach(color => {
+            for (let i = 0; i < count / colors.length; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                this.createParticles(x, y, color, 1, {
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 60,
+                    size: Math.random() * 5 + 2,
+                    fade: true,
+                    sparkle: true
+                });
+            }
+        });
+    }
+    
+    createRainEffect(x, y, color = '#00BFFF', count = 5) {
+        // Gentle rain drop effect
+        for (let i = 0; i < count; i++) {
+            this.createParticles(x + Math.random() * 20 - 10, y, color, 1, {
+                vx: (Math.random() - 0.5) * 2,
+                vy: Math.random() * 3 + 2,
+                life: 40,
+                size: Math.random() * 3 + 1,
+                gravity: 0.5
             });
         }
     }
@@ -369,9 +723,39 @@ class SandylandGame {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
             
+            // Enhanced particle physics
             particle.x += particle.vx;
             particle.y += particle.vy;
-            particle.vy += 0.3; // Gravity
+            particle.vy += particle.gravity || 0.3; // Custom gravity
+            
+            // Bounce effect for certain particles
+            if (particle.bounce && particle.y > this.groundY) {
+                particle.y = this.groundY;
+                particle.vy *= -particle.bounce;
+                particle.vx *= 0.8; // Friction
+            }
+            
+            // Fade effect
+            if (particle.fade) {
+                particle.alpha = particle.life / particle.maxLife;
+            }
+            
+            // Sparkle effect - add extra particles
+            if (particle.sparkle && Math.random() < 0.1) {
+                this.createParticles(
+                    particle.x + (Math.random() - 0.5) * 4,
+                    particle.y + (Math.random() - 0.5) * 4,
+                    particle.color,
+                    1,
+                    {
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        life: 10,
+                        size: 1
+                    }
+                );
+            }
+            
             particle.life--;
             
             if (particle.life <= 0) {
@@ -400,6 +784,18 @@ class SandylandGame {
                            this.papaSandy.y + this.papaSandy.height/2, 
                            effect.color, 20);
         
+        // Play enhanced collection sound based on power-up type
+        if (type === 'superTire') {
+            this.sounds.superTireCollect();
+        } else if (type === 'medicalKit') {
+            this.sounds.medicalKitCollect();
+        } else {
+            this.sounds.collectPowerUp();
+        }
+        
+        // Play power-up activation sound
+        this.sounds.powerUpActivate();
+        
         this.score += 100;
     }
     
@@ -416,6 +812,14 @@ class SandylandGame {
     }
     
     update() {
+        const updateStart = performance.now();
+        
+        // Performance monitoring
+        if (this.performanceMonitor) {
+            this.performanceMonitor.startUpdate();
+        }
+        
+        // Update game systems with performance optimization
         this.updatePapaSandy();
         this.updateTires();
         this.updateEnemies();
@@ -423,6 +827,21 @@ class SandylandGame {
         this.updateActivePowerUps();
         this.updateParticles();
         this.checkCollisions();
+        
+        // Performance monitoring
+        if (this.performanceMonitor) {
+            this.performanceMonitor.endUpdate();
+        }
+        
+        // Performance optimization: Limit particle count
+        if (this.particles.length > 200) {
+            this.particles = this.particles.slice(-200);
+        }
+        
+        // Performance optimization: Limit confetti count
+        if (this.victoryScreen.confetti.length > 200) {
+            this.victoryScreen.confetti = this.victoryScreen.confetti.slice(-200);
+        }
     }
     
     updateTires() {
@@ -509,7 +928,13 @@ class SandylandGame {
         if ((this.keys['Space'] || this.keys['ArrowUp'] || this.keys['KeyW']) && this.papaSandy.onGround) {
             this.papaSandy.velocityY = -currentJumpPower;
             this.papaSandy.onGround = false;
-            this.sounds.jump();
+            
+            // Play enhanced jump sound with power-up effects
+            if (this.activePowerUps.some(p => p.type === 'tropicalEnergy')) {
+                this.sounds.superJump();
+            } else {
+                this.sounds.jump();
+            }
         }
         
         // Handle tire rolling (B key)
@@ -561,8 +986,12 @@ class SandylandGame {
             nearestTire.velocityX = this.papaSandy.direction * rollSpeed;
             nearestTire.velocityY = -2; // Small hop when rolling
             
-            // Play tire rolling sound
-            this.sounds.rollTire();
+            // Play enhanced tire rolling sound based on power-up status
+            if (this.activePowerUps.some(p => p.type === 'superTire')) {
+                this.sounds.superRollTire();
+            } else {
+                this.sounds.rollTire();
+            }
             
             // Check if tire hits a barrier
             for (let barrier of this.barriers) {
@@ -705,8 +1134,20 @@ class SandylandGame {
                     enemy.alive = false;
                     this.storyElements.enemiesDefeated++;
                     this.papaSandy.velocityY = -8; // Bounce up
-                    this.sounds.enemyDefeat();
-                    this.createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#FF0000', 10);
+                    
+                    // Play enhanced enemy defeat sound
+                    if (this.activePowerUps.some(p => p.type === 'medicalKit')) {
+                        this.sounds.enemyCrush();
+                    } else {
+                        this.sounds.enemyDefeat();
+                    }
+                    
+                    // Create enhanced enemy defeat effect
+                    this.createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#FF0000', 15);
+                    this.createParticles(enemy.x + enemy.width/2, enemy.y + enemy.height/2, '#FFFF00', 8);
+                    
+                    // Add screen shake for dramatic effect
+                    this.addScreenShake(2, 150);
                     this.score += 50;
                 } else {
                     // Papa takes damage - bounce back
@@ -730,15 +1171,240 @@ class SandylandGame {
     }
     
     createDestructionEffect(x, y) {
-        this.createParticles(x + 15, y + 30, '#FFA500', 15);
+        // Create enhanced destruction effect
+        this.createExplosion(x + 15, y + 30, '#FFA500', 20);
+        this.createParticles(x + 15, y + 30, '#FF6347', 10);
+        
+        // Play enhanced destruction sound
         this.sounds.destroyBarrier();
+        
+        // Add screen shake for dramatic effect
+        this.addScreenShake(3, 200);
+        
         this.score += 25;
+        
+        // Check victory condition - all barriers destroyed
+        const allBarriersDestroyed = this.barriers.every(barrier => barrier.health <= 0);
+        if (allBarriersDestroyed && this.gameState !== 'VICTORY') {
+            this.triggerVictory();
+        }
     }
     
     gameOver() {
-        // Simple game over - could be expanded with proper game over screen
-        alert(`Game Over! Final Score: ${this.score}`);
-        location.reload();
+        this.gameState = 'GAME_OVER';
+        this.victoryScreen.finalStats = {
+            score: this.score,
+            time: Math.floor((Date.now() - this.gameStartTime) / 1000),
+            enemiesDefeated: this.storyElements.enemiesDefeated,
+            barriersDestroyed: this.storyElements.barriersDestroyed,
+            powerUpsCollected: this.activePowerUps.length
+        };
+        this.victoryScreen.isActive = true;
+        this.victoryScreen.showStats = true;
+        this.victoryScreen.title = "GAME OVER";
+        this.victoryScreen.subtitle = "Papa Sandy Needs to Try Again!";
+        
+        // Create dramatic game over particles
+        this.createParticles(this.papaSandy.x + this.papaSandy.width/2, 
+                           this.papaSandy.y + this.papaSandy.height/2, '#FF0000', 30);
+        
+        // Play game over sound
+        this.sounds.gameOver = this.createSound(100, 0.5, 'sawtooth');
+        this.sounds.gameOver();
+    }
+    
+    triggerVictory() {
+        this.gameState = 'VICTORY';
+        this.victoryScreen.finalStats = {
+            score: this.score,
+            time: Math.floor((Date.now() - this.gameStartTime) / 1000),
+            enemiesDefeated: this.storyElements.enemiesDefeated,
+            barriersDestroyed: this.storyElements.barriersDestroyed,
+            powerUpsCollected: this.activePowerUps.length
+        };
+        this.victoryScreen.isActive = true;
+        this.victoryScreen.celebrationTime = Date.now();
+        this.victoryScreen.showStats = false;
+        
+        // Position corvette for victory scene
+        this.victoryScreen.corvetteX = this.canvas.width - 200;
+        this.victoryScreen.corvetteY = this.groundY - 60;
+        
+        // Create massive victory celebration with dramatic effects
+        this.createVictoryConfetti();
+        this.createCelebrationBurst(
+            this.papaSandy.x + this.papaSandy.width/2, 
+            this.papaSandy.y + this.papaSandy.height/2, 
+            ['#FFD700', '#FF69B4', '#00FFFF', '#FF0000'], 
+            50
+        );
+        
+        // Add dramatic screen shake and flash
+        this.addScreenShake(15, 1000);
+        this.addScreenFlash('#FFD700', 0.7, 500);
+        
+        // Play victory fanfare
+        this.sounds.victoryFanfare = () => {
+            // Create a multi-note victory fanfare
+            const notes = [523, 659, 784, 1047]; // C, E, G, C (higher octave)
+            notes.forEach((freq, index) => {
+                setTimeout(() => {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.3);
+                }, index * 150);
+            });
+        };
+        this.sounds.victoryFanfare();
+        
+        // Create ongoing celebration effects
+        setInterval(() => {
+            if (this.gameState === 'VICTORY' && Math.random() < 0.3) {
+                this.createMagicBurst(
+                    Math.random() * this.canvas.width,
+                    Math.random() * this.canvas.height / 2,
+                    '#FFD700',
+                    10
+                );
+            }
+        }, 1000);
+    }
+    
+    // Restart game method
+    restartGame() {
+        // Clear all game state
+        this.papaSandy.x = 100;
+        this.papaSandy.y = this.groundY;
+        this.papaSandy.velocityX = 0;
+        this.papaSandy.velocityY = 0;
+        this.papaSandy.onGround = true;
+        this.papaSandy.direction = 1;
+        
+        // Reset tires
+        this.tires.forEach((tire, index) => {
+            tire.x = 300 + index * 200;
+            tire.y = this.groundY - 40;
+            tire.velocityX = 0;
+            tire.velocityY = 0;
+            tire.isRolling = false;
+        });
+        
+        // Reset barriers
+        this.barriers.forEach(barrier => {
+            barrier.health = barrier.maxHealth;
+        });
+        
+        // Reset enemies
+        this.enemies.forEach(enemy => {
+            enemy.alive = true;
+            enemy.x = enemy.patrolStart;
+        });
+        
+        // Reset power-ups
+        this.powerUps = [];
+        this.activePowerUps = [];
+        
+        // Reset particles
+        this.particles = [];
+        this.victoryScreen.confetti = [];
+        
+        // Reset game state
+        this.score = 0;
+        this.lives = 3;
+        this.gameStartTime = Date.now();
+        this.storyElements.enemiesDefeated = 0;
+        this.storyElements.barriersDestroyed = 0;
+        
+        // Reset victory screen
+        this.victoryScreen.isActive = false;
+        this.victoryScreen.showStats = false;
+        this.victoryScreen.cameraShake = null;
+        this.victoryScreen.screenFlash = null;
+        
+        // Return to splash screen
+        this.gameState = 'SPLASH';
+        this.victoryScreen.currentLine = 0;
+        
+        // Play restart sound
+        this.sounds.resume();
+    }
+    
+    createVictoryConfetti() {
+        const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFD700', '#FFA500'];
+        for (let i = 0; i < 100; i++) {
+            this.victoryScreen.confetti.push({
+                x: Math.random() * this.canvas.width,
+                y: -10,
+                vx: (Math.random() - 0.5) * 4,
+                vy: Math.random() * 3 + 2,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: Math.random() * 6 + 3,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.2,
+                alpha: 1
+            });
+        }
+    }
+    
+    // Screen shake effect for dramatic moments
+    addScreenShake(intensity = 5, duration = 500) {
+        this.victoryScreen.cameraShake = {
+            intensity: intensity,
+            duration: duration,
+            startTime: Date.now()
+        };
+    }
+    
+    // Screen flash effect for dramatic moments
+    addScreenFlash(color = '#FFFFFF', alpha = 0.5, duration = 200) {
+        this.victoryScreen.screenFlash = {
+            color: color,
+            alpha: alpha,
+            duration: duration,
+            startTime: Date.now()
+        };
+    }
+    
+    updateVictoryConfetti() {
+        for (let i = this.victoryScreen.confetti.length - 1; i >= 0; i--) {
+            const confetti = this.victoryScreen.confetti[i];
+            
+            confetti.x += confetti.vx;
+            confetti.y += confetti.vy;
+            confetti.rotation += confetti.rotationSpeed;
+            confetti.vy += 0.1; // Gravity
+            
+            // Remove confetti that falls off screen
+            if (confetti.y > this.canvas.height + 10) {
+                this.victoryScreen.confetti.splice(i, 1);
+            }
+        }
+        
+        // Add new confetti periodically
+        if (this.victoryScreen.confetti.length < 50 && Math.random() < 0.1) {
+            const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFD700', '#FFA500'];
+            this.victoryScreen.confetti.push({
+                x: Math.random() * this.canvas.width,
+                y: -10,
+                vx: (Math.random() - 0.5) * 4,
+                vy: Math.random() * 3 + 2,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: Math.random() * 6 + 3,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 0.2
+            });
+        }
     }
     
     drawPixelatedSprite(x, y, width, height, pixels, colors) {
@@ -884,33 +1550,262 @@ class SandylandGame {
     }
     
     render() {
-        // Clear canvas
+        const renderStart = performance.now();
+        
+        // Performance monitoring
+        if (this.performanceMonitor) {
+            this.performanceMonitor.startRender();
+        }
+        
+        // Apply screen shake effect
+        let shakeX = 0, shakeY = 0;
+        if (this.victoryScreen.cameraShake && Date.now() - this.victoryScreen.cameraShake.startTime < this.victoryScreen.cameraShake.duration) {
+            const shakeProgress = 1 - (Date.now() - this.victoryScreen.cameraShake.startTime) / this.victoryScreen.cameraShake.duration;
+            shakeX = (Math.random() - 0.5) * this.victoryScreen.cameraShake.intensity * shakeProgress;
+            shakeY = (Math.random() - 0.5) * this.victoryScreen.cameraShake.intensity * shakeProgress;
+        } else {
+            this.victoryScreen.cameraShake = null;
+        }
+        
+        // Apply screen flash effect
+        if (this.victoryScreen.screenFlash && Date.now() - this.victoryScreen.screenFlash.startTime < this.victoryScreen.screenFlash.duration) {
+            const flashProgress = 1 - (Date.now() - this.victoryScreen.screenFlash.startTime) / this.victoryScreen.screenFlash.duration;
+            this.ctx.save();
+            this.ctx.globalAlpha = this.victoryScreen.screenFlash.alpha * flashProgress;
+            this.ctx.fillStyle = this.victoryScreen.screenFlash.color;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.restore();
+        } else {
+            this.victoryScreen.screenFlash = null;
+        }
+        
+        // Clear canvas with performance optimization
+        this.ctx.save();
+        this.ctx.translate(shakeX, shakeY);
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Draw background
-        this.drawBackground();
+        // Only render game elements when not in pause menu
+        if (this.gameState !== 'PAUSED' && this.gameState !== 'SPLASH' && this.gameState !== 'STORY') {
+            // Draw background
+            this.drawBackground();
+            
+            // Draw game objects with render optimization
+            this.drawBarriers();
+            this.drawTires();
+            this.drawPowerUps();
+            this.drawParticles();
+            this.drawEnemies();
+            this.drawPapaSandy();
+            
+            // Draw UI and story elements
+            this.drawEnhancedUI();
+            
+            // Draw victory screen if active
+            if (this.gameState === 'VICTORY') {
+                this.drawVictoryScreen();
+            }
+        } else {
+            // Draw UI for pause/story screens
+            this.drawEnhancedUI();
+        }
         
-        // Draw barriers
-        this.drawBarriers();
+        this.ctx.restore();
         
-        // Draw tires
-        this.drawTires();
+        // Performance monitoring
+        if (this.performanceMonitor) {
+            this.performanceMonitor.endRender();
+        }
         
-        // Draw power-ups
-        this.drawPowerUps();
+        // Performance optimization: Skip frames if performance is poor
+        if (this.performanceMonitor && this.performanceMonitor.metrics.fps < 30) {
+            requestAnimationFrame(() => {
+                setTimeout(() => this.render(), 16); // Cap at ~60 FPS
+            });
+        }
+    }
+    
+    drawVictoryScreen() {
+        // Dark overlay
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Draw particles
-        this.drawParticles();
+        // Victory title with glow effect
+        this.ctx.save();
+        this.ctx.shadowBlur = 20;
+        this.ctx.shadowColor = '#FFD700';
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.font = 'bold 48px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(this.victoryScreen.title, this.canvas.width / 2, 100);
+        this.ctx.restore();
         
-        // Draw enemies
-        this.drawEnemies();
+        // Victory subtitle
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '24px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(this.victoryScreen.subtitle, this.canvas.width / 2, 150);
         
-        // Draw Papa Sandy (with power-up effects)
+        // Draw corvette in victory scene
+        this.drawVictoryCorvette();
+        
+        // Draw Papa Sandy victory pose
+        this.drawPapaSandyVictory();
+        
+        // Update and draw victory confetti
+        this.updateVictoryConfetti();
+        this.drawVictoryConfetti();
+        
+        // Show final statistics after delay
+        if (Date.now() - this.victoryScreen.celebrationTime > 2000) {
+            this.victoryScreen.showStats = true;
+            this.drawVictoryStats();
+        }
+        
+        // Continue celebration message
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '16px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Press SPACEBAR to continue celebrating!', this.canvas.width / 2, this.canvas.height - 50);
+    }
+    
+    drawVictoryCorvette() {
+        const x = this.victoryScreen.corvetteX;
+        const y = this.victoryScreen.corvetteY;
+        
+        // Draw white corvette
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.fillRect(x, y, 80, 30);
+        
+        // Corvette details
+        this.ctx.fillStyle = '#FF0000';
+        this.ctx.fillRect(x + 10, y + 5, 60, 20); // Racing stripe
+        
+        // Wheels
+        this.ctx.fillStyle = '#333333';
+        this.ctx.beginPath();
+        this.ctx.arc(x + 15, y + 30, 8, 0, Math.PI * 2);
+        this.ctx.arc(x + 65, y + 30, 8, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Headlights
+        this.ctx.fillStyle = '#FFFF00';
+        this.ctx.fillRect(x + 70, y + 5, 5, 10);
+        this.ctx.fillRect(x + 70, y + 15, 5, 10);
+        
+        // Victory sparkle effect
+        this.createMagicBurst(x + 40, y + 15, '#FFD700', 3);
+    }
+    
+    drawPapaSandyVictory() {
+        const x = this.papaSandy.x;
+        const y = this.papaSandy.y;
+        
+        // Animate victory pose
+        this.victoryScreen.papaSandyVictoryPose += 0.1;
+        const bounce = Math.sin(this.victoryScreen.papaSandyVictoryPose) * 5;
+        
+        // Draw Papa Sandy with victory pose (arms up)
+        this.ctx.save();
+        this.ctx.translate(0, bounce);
+        
+        // Victory aura
+        this.ctx.strokeStyle = '#FFD700';
+        this.ctx.lineWidth = 3;
+        this.ctx.globalAlpha = 0.5;
+        this.ctx.beginPath();
+        this.ctx.arc(x + this.papaSandy.width/2, y + this.papaSandy.height/2, 
+                   this.papaSandy.width + 15, 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.globalAlpha = 1;
+        
+        // Draw Papa Sandy (using existing sprite method)
         this.drawPapaSandy();
         
-        // Draw UI and story elements
-        this.drawEnhancedUI();
+        // Victory celebration particles
+        if (Math.random() < 0.3) {
+            this.createMagicBurst(x + this.papaSandy.width/2, y + this.papaSandy.height/2, '#FFD700', 2);
+        }
+        
+        this.ctx.restore();
     }
+    
+    drawVictoryConfetti() {
+        for (let confetti of this.victoryScreen.confetti) {
+            this.ctx.save();
+            this.ctx.translate(confetti.x, confetti.y);
+            this.ctx.rotate(confetti.rotation);
+            
+            this.ctx.fillStyle = confetti.color;
+            this.ctx.fillRect(-confetti.size/2, -confetti.size/2, confetti.size, confetti.size);
+            
+            this.ctx.restore();
+        }
+    }
+    
+    drawVictoryStats() {
+        const stats = this.victoryScreen.finalStats;
+        const startX = this.canvas.width / 2 - 150;
+        const startY = 250;
+        
+        // Stats background
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(startX, startY, 300, 200);
+        
+        // Stats border
+        this.ctx.strokeStyle = '#FFD700';
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(startX, startY, 300, 200);
+        
+        // Title
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.font = 'bold 20px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Mission Statistics', this.canvas.width / 2, startY + 30);
+        
+        // Stats
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '16px Courier New';
+        this.ctx.textAlign = 'left';
+        
+        const statLines = [
+            `Final Score: ${stats.score}`,
+            `Time: ${stats.time} seconds`,
+            `Enemies Defeated: ${stats.enemiesDefeated}`,
+            `Barriers Destroyed: ${stats.barriersDestroyed}`,
+            `Power-ups Collected: ${stats.powerUpsCollected}`
+        ];
+        
+        statLines.forEach((stat, index) => {
+            this.ctx.fillText(stat, startX + 20, startY + 60 + index * 25);
+        });
+        
+        stats.forEach((stat, index) => {
+            this.ctx.fillText(stat, startX + 20, startY + 60 + index * 25);
+        });
+        
+        // Performance rating
+        const rating = this.getPerformanceRating(stats);
+        this.ctx.fillStyle = rating.color;
+        this.ctx.font = 'bold 18px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText(rating.text, this.canvas.width / 2, startY + 180);
+    }
+    
+    getPerformanceRating(stats) {
+        const totalScore = stats.score + stats.enemiesDefeated * 50 + stats.barriersDestroyed * 25;
+        
+        if (totalScore > 2000) {
+            return { text: '🏆 LEGENDARY PERFORMANCE!', color: '#FFD700' };
+        } else if (totalScore > 1500) {
+            return { text: '⭐ EXCELLENT!', color: '#FFA500' };
+        } else if (totalScore > 1000) {
+            return { text: '👍 GREAT JOB!', color: '#00FF00' };
+        } else if (totalScore > 500) {
+            return { text: '👌 GOOD WORK!', color: '#00BFFF' };
+        } else {
+            return { text: '👊 KEEP PRACTICING!', color: '#FF69B4' };
+        }
+        }
     
     drawBarriers() {
         for (let barrier of this.barriers) {
@@ -1129,10 +2024,38 @@ class SandylandGame {
     
     drawParticles() {
         for (let particle of this.particles) {
-            const alpha = particle.life / particle.maxLife;
+            const alpha = particle.alpha || (particle.life / particle.maxLife);
             this.ctx.globalAlpha = alpha;
             this.ctx.fillStyle = particle.color;
-            this.ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+            
+            // Enhanced particle rendering
+            if (particle.sparkle) {
+                // Draw sparkle effect with glow
+                this.ctx.save();
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = particle.color;
+                this.ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+                this.ctx.restore();
+            } else {
+                // Standard particle with optional rotation
+                this.ctx.save();
+                this.ctx.translate(particle.x + particle.size/2, particle.y + particle.size/2);
+                
+                if (particle.rotation) {
+                    this.ctx.rotate(particle.rotation);
+                }
+                
+                // Draw different particle shapes based on type
+                if (particle.trail) {
+                    // Trail particle - elongated
+                    this.ctx.fillRect(-particle.size, -particle.size/2, particle.size * 2, particle.size);
+                } else {
+                    // Regular particle - square
+                    this.ctx.fillRect(-particle.size/2, -particle.size/2, particle.size, particle.size);
+                }
+                
+                this.ctx.restore();
+            }
         }
         this.ctx.globalAlpha = 1;
     }
@@ -1202,5 +2125,16 @@ class SandylandGame {
 
 // Initialize game when page loads
 window.addEventListener('load', () => {
-    new SandylandGame();
+    // Start performance monitoring
+    const performanceMonitor = new SandylandPerformanceMonitor();
+    
+    // Initialize game with performance monitoring
+    const game = new SandylandGame();
+    game.performanceMonitor = performanceMonitor;
+    
+    // Log performance metrics periodically
+    setInterval(() => {
+        const metrics = performanceMonitor.getMetrics();
+        console.log('Sandyland Performance:', metrics);
+    }, 5000);
 });
