@@ -13,6 +13,9 @@ class SandylandGame {
         // Game states
         this.gameState = 'PLAYING';
         
+        // Score tracking
+        this.score = 0;
+        
         // Papa Sandy character
         this.papaSandy = {
             x: 100,
@@ -42,6 +45,32 @@ class SandylandGame {
                 alive: true
             }
         ];
+        
+        // Power-ups for level progression
+        this.powerUps = [
+            {
+                type: 'star',
+                x: 300,
+                y: this.groundY - 40,
+                width: 24,
+                height: 24,
+                collected: false,
+                color: '#FFD700'
+            },
+            {
+                type: 'star',
+                x: 500,
+                y: this.groundY - 40,
+                width: 24,
+                height: 24,
+                collected: false,
+                color: '#FFD700'
+            }
+        ];
+        
+        // Level completion flag
+        this.levelCompleted = false;
+        this.levelCompletionThreshold = 2; // Need to collect 2 stars
         
         // Background elements
         this.palms = [
@@ -241,6 +270,27 @@ class SandylandGame {
                 enemy.direction = -1;
             }
         }
+        
+        // Check power-up collection
+        for (let powerUp of this.powerUps) {
+            if (!powerUp.collected) {
+                // Simple collision detection
+                if (this.papaSandy.x < powerUp.x + powerUp.width &&
+                    this.papaSandy.x + this.papaSandy.width > powerUp.x &&
+                    this.papaSandy.y < powerUp.y + powerUp.height &&
+                    this.papaSandy.y + this.papaSandy.height > powerUp.y) {
+                    
+                    powerUp.collected = true;
+                    this.score += 100;
+                    
+                    // Check if level is completed
+                    const collectedCount = this.powerUps.filter(p => p.collected).length;
+                    if (collectedCount >= this.levelCompletionThreshold) {
+                        this.levelCompleted = true;
+                    }
+                }
+            }
+        }
     }
     
     draw() {
@@ -281,17 +331,72 @@ class SandylandGame {
             }
         }
         
-        // Draw score
+        // Draw power-ups
+        for (let powerUp of this.powerUps) {
+            if (!powerUp.collected) {
+                this.ctx.fillStyle = powerUp.color;
+                this.ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
+                
+                // Draw star shape
+                this.ctx.fillStyle = '#FFFFFF';
+                this.ctx.font = '16px Courier New';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('⭐', powerUp.x + powerUp.width/2, powerUp.y + powerUp.height - 4);
+            }
+        }
+        
+        // Draw score and progress
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = '20px Courier New';
         this.ctx.textAlign = 'left';
-        this.ctx.fillText('Score: 0', 10, 30);
+        this.ctx.fillText('Score: ' + this.score, 10, 30);
         this.ctx.fillText('Lives: 3', 10, 60);
+        
+        // Draw level progress
+        const collectedCount = this.powerUps.filter(p => p.collected).length;
+        this.ctx.fillText('Stars: ' + collectedCount + '/' + this.levelCompletionThreshold, 10, 90);
+        
+        // Draw level completion message
+        if (this.levelCompleted) {
+            this.ctx.fillStyle = '#00FF00';
+            this.ctx.font = '32px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('LEVEL COMPLETE!', this.canvas.width/2, this.canvas.height/2);
+            this.ctx.font = '16px Courier New';
+            this.ctx.fillText('Press SPACE to continue', this.canvas.width/2, this.canvas.height/2 + 40);
+            
+            // Check for space press to restart level
+            if (this.keys['Space']) {
+                this.resetLevel();
+            }
+        }
     }
     
     gameLoop() {
         this.update();
         this.draw();
         requestAnimationFrame(() => this.gameLoop());
+    }
+    
+    resetLevel() {
+        // Reset power-ups
+        for (let powerUp of this.powerUps) {
+            powerUp.collected = false;
+        }
+        
+        // Reset level completion flag
+        this.levelCompleted = false;
+        
+        // Reset Papa Sandy position
+        this.papaSandy.x = 100;
+        this.papaSandy.y = this.groundY;
+        this.papaSandy.velocityX = 0;
+        this.papaSandy.velocityY = 0;
+        
+        // Reset score
+        this.score = 0;
+        
+        // Reset keys
+        this.keys = {};
     }
 }
