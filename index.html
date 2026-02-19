@@ -56,7 +56,7 @@
 </head>
 <body>
     <div id="gameInfo">
-        <div>SANDYLAND - TESTING...</div>
+        <div>SANDYLAND - LOADING...</div>
         <div>Please wait while the game loads...</div>
     </div>
     
@@ -64,14 +64,12 @@
         <canvas id="gameCanvas" width="800" height="600"></canvas>
     </div>
     
-    <!-- Load the full game -->
-    <script src="game.js"></script>
+    <!-- Load the simplified game -->
+    <script src="simple-game.js"></script>
     <script>
         // Initialize the game when page loads
         window.addEventListener('load', () => {
             const info = document.getElementById('gameInfo');
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
             
             try {
                 // Check if SandylandGame class exists
@@ -87,8 +85,8 @@
                 // Update info to show game is working
                 info.innerHTML = `
                     <div>✅ SANDYLAND - GAME STARTED!</div>
-                    <div>Use ARROW KEYS to move, SPACEBAR to jump, B to roll tires</div>
-                    <div>Collect power-ups: ⭐ Super Tire | 🏥 Medical Kit | ⚡ Tropical Energy</div>
+                    <div>Use ARROW KEYS to move, SPACEBAR to jump</div>
+                    <div>Collect items and avoid the red crabs!</div>
                 `;
                 
                 console.log('Sandyland game started successfully!');
