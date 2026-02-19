@@ -1936,44 +1936,43 @@ class SandylandGame {
         }
         
         // Phase 6: Enhanced rendering for different game states
-        } else {
-            // Render based on game state
-            switch (this.gameState) {
-                case 'SPLASH':
-                    this.drawSplashScreen();
-                    break;
-                case 'MENU':
-                    if (this.menuType === 'difficulty') {
-                        this.drawDifficultyMenu();
-                    } else if (this.menuType === 'world') {
-                        this.drawWorldMenu();
-                    }
-                    break;
-                case 'STORY':
-                    this.drawEnhancedStoryScreen();
-                    break;
-                case 'PLAYING':
-                    // Draw game elements
-                    this.drawBackground();
-                    this.drawBarriers();
-                    this.drawTires();
-                    this.drawPowerUps();
-                    this.drawParticles();
-                    this.drawEnemies();
-                    this.drawPapaSandy();
-                    this.drawEnhancedUI();
-                    break;
-                case 'PAUSED':
-                    this.drawGameElements();
-                    this.drawPauseMenu();
-                    break;
-                case 'VICTORY':
-                    this.drawGameElements();
-                    this.drawVictoryScreen();
-                    break;
-                case 'GAME_OVER':
-                    this.drawGameOverScreen();
-                    break;
+        // Render based on game state
+        switch (this.gameState) {
+            case 'SPLASH':
+                this.drawSplashScreen();
+                break;
+            case 'MENU':
+                if (this.menuType === 'difficulty') {
+                    this.drawDifficultyMenu();
+                } else if (this.menuType === 'world') {
+                    this.drawWorldMenu();
+                }
+                break;
+            case 'STORY':
+                this.drawEnhancedStoryScreen();
+                break;
+            case 'PLAYING':
+                // Draw game elements
+                this.drawBackground();
+                this.drawBarriers();
+                this.drawTires();
+                this.drawPowerUps();
+                this.drawParticles();
+                this.drawEnemies();
+                this.drawPapaSandy();
+                this.drawEnhancedUI();
+                break;
+            case 'PAUSED':
+                this.drawGameElements();
+                this.drawPauseMenu();
+                break;
+            case 'VICTORY':
+                this.drawGameElements();
+                this.drawVictoryScreen();
+                break;
+            case 'GAME_OVER':
+                this.drawGameOverScreen();
+                break;
             }
         }
         

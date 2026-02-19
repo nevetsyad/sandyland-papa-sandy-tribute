@@ -82,14 +82,8 @@
                 // Create game instance
                 const game = new SandylandGame();
                 
-                // Update info to show game is working
-                info.innerHTML = `
-                    <div>✅ SANDYLAND - GAME STARTED!</div>
-                    <div>Desktop: ARROW KEYS to move, SPACEBAR to jump</div>
-                    <div>Mobile: Use on-screen buttons below the game</div>
-                    <div>Collect ⭐ stars (2 needed) to complete the level!</div>
-                    <div>Press SPACE to restart after completing level</div>
-                `;
+                // Hide the loading screen
+                info.style.display = 'none';
                 
                 console.log('Sandyland game started successfully!');
             } catch (error) {
