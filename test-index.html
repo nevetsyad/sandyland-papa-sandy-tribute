@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandyland Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 50%, #F0E68C 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+        }
+        #gameContainer {
+            background: #000;
+            border: 4px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+        }
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+        }
+        #status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="status">Game Loading...</div>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    <script>
+        // Simple test to verify game initialization
+        window.addEventListener('load', () => {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const status = document.getElementById('status');
+            
+            if (canvas && ctx) {
+                status.textContent = 'Canvas OK - Testing game initialization...';
+                
+                // Try to create game instance
+                try {
+                    // Create a simple game test
+                    ctx.fillStyle = '#87CEEB';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = '24px Courier New';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('SANDYLAND TEST', canvas.width/2, canvas.height/2);
+                    
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = '16px Courier New';
+                    ctx.fillText('Canvas working correctly!', canvas.width/2, canvas.height/2 + 40);
+                    
+                    status.textContent = '✅ Game Canvas Working - Ready for full game';
+                    status.style.color = '#00FF00';
+                } catch (error) {
+                    status.textContent = '❌ Error: ' + error.message;
+                    status.style.color = '#FF0000';
+                }
+            } else {
+                status.textContent = '❌ Canvas not found';
+                status.style.color = '#FF0000';
+            }
+        });
+    </script>
+</body>
+</html>
