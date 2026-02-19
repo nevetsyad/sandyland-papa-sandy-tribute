@@ -56,7 +56,7 @@
 </head>
 <body>
     <div id="gameInfo">
-        <div>SANDYLAND - LOADING...</div>
+        <div>SANDYLAND - INITIALIZING...</div>
         <div>Please wait while the game loads...</div>
     </div>
     
@@ -70,19 +70,32 @@
         // Initialize the game when page loads
         window.addEventListener('load', () => {
             const info = document.getElementById('gameInfo');
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            
             try {
-                // Game will initialize automatically when game.js loads
-                info.innerHTML = `
-                    <div>✅ SANDYLAND - GAME LOADED!</div>
-                    <div>Use ARROW KEYS to move, SPACEBAR to jump, B to roll tires</div>
-                    <div>Collect power-ups: ⭐ Super Tire | 🏥 Medical Kit | ⚡ Tropical Energy</div>
-                `;
-                console.log('Sandyland game system initialized!');
+                // Check if SandylandGame class exists
+                if (typeof SandylandGame !== 'undefined') {
+                    // Create game instance
+                    const game = new SandylandGame();
+                    
+                    // Update info to show game is working
+                    info.innerHTML = `
+                        <div>✅ SANDYLAND - GAME STARTED!</div>
+                        <div>Use ARROW KEYS to move, SPACEBAR to jump, B to roll tires</div>
+                        <div>Collect power-ups: ⭐ Super Tire | 🏥 Medical Kit | ⚡ Tropical Energy</div>
+                    `;
+                    
+                    console.log('Sandyland game started successfully!');
+                } else {
+                    throw new Error('SandylandGame class not found');
+                }
             } catch (error) {
                 console.error('Game initialization error:', error);
                 info.innerHTML = `
                     <div style="color: red;">❌ GAME ERROR</div>
-                    <div>Unable to load game. Please refresh the page.</div>
+                    <div>${error.message}</div>
+                    <div>Please refresh the page to try again.</div>
                 `;
             }
         });
