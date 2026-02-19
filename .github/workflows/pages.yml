@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
   contents: read
 
 jobs:
@@ -27,3 +26,5 @@ jobs:
         
     - name: Deploy to GitHub Pages
       uses: actions/deploy-pages@v4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
