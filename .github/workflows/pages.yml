@@ -9,10 +9,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-    
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -27,5 +23,3 @@ jobs:
         
     - name: Deploy to GitHub Pages
       uses: actions/deploy-pages@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
