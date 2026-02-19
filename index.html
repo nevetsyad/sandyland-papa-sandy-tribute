@@ -3,91 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sandyland: Papa Sandy's Corvette Rescue - 8-bit Tribute Game</title>
-    <meta name="description" content="A loving 8-bit NES-style tribute game celebrating Papa Sandy's passions - Corvette, horses, beaches, and his career as a tractor tire salesman">
-    <meta name="author" content="Sandyland Tribute">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="canonical" href="https://nevetsyad.github.io/sandyland-papa-sandy-tribute/">
+    <title>Sandyland - Papa Sandy's Corvette Rescue</title>
     <style>
         body {
             margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 50%, #F0E68C 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: 'Courier New', monospace;
-            animation: backgroundShift 10s ease-in-out infinite alternate;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            text-align: center;
         }
-        
-        @keyframes backgroundShift {
-            0% { background: linear-gradient(135deg, #87CEEB 0%, #98FB98 50%, #F0E68C 100%); }
-            100% { background: linear-gradient(135deg, #98FB98 0%, #87CEEB 50%, #F0E68C 100%); }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        
-        #gameContainer {
-            background: #000;
-            border: 4px solid #333;
-            border-radius: 8px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.7), 0 0 60px rgba(255,215,0,0.3);
-            animation: containerGlow 3s ease-in-out infinite alternate;
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
         }
-        
-        @keyframes containerGlow {
-            0% { box-shadow: 0 0 30px rgba(0,0,0,0.7), 0 0 60px rgba(255,215,0,0.3); }
-            100% { box-shadow: 0 0 30px rgba(0,0,0,0.7), 0 0 80px rgba(255,215,0,0.5); }
+        .game-info {
+            text-align: left;
+            margin: 20px 0;
         }
-        
-        canvas {
-            display: block;
-            image-rendering: pixelated;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: crisp-edges;
-            border-radius: 4px;
-        }
-        
-        #gameInfo {
-            position: absolute;
-            top: 20px;
-            left: 20px;
+        .status {
+            background: #4CAF50;
             color: white;
-            font-size: 16px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            z-index: 10;
-            background: rgba(0,0,0,0.6);
-            padding: 15px;
-            border-radius: 8px;
-            border: 2px solid rgba(255,215,0,0.5);
-            animation: infoPulse 2s ease-in-out infinite alternate;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
         }
-        
-        @keyframes infoPulse {
-            0% { border-color: rgba(255,215,0,0.5); }
-            100% { border-color: rgba(255,105,180,0.7); }
-        }
-        
-        #gameInfo div {
-            margin: 5px 0;
-            font-weight: bold;
-        }
-        
-        #gameInfo div:nth-child(1) { color: #FFD700; font-size: 18px; }
-        #gameInfo div:nth-child(2) { color: #FFFFFF; font-size: 14px; }
-        #gameInfo div:nth-child(3) { color: #FF69B4; font-size: 12px; }
     </style>
 </head>
 <body>
-    <div id="gameInfo">
-        <div>SANDYLAND - Phase 4: Power-ups & Game Polish</div>
-        <div>Use ARROW KEYS to move, SPACEBAR to jump, B to roll tires</div>
-        <div>Collect power-ups: ⭐ Super Tire | 🏥 Medical Kit | ⚡ Tropical Energy</div>
+    <div class="container">
+        <h1>🏖️ Sandyland: Papa Sandy's Corvette Rescue 🏎️</h1>
+        
+        <div class="status">
+            🎮 GAME DEPLOYED SUCCESSFULLY!
+        </div>
+        
+        <div class="game-info">
+            <h3>🎯 About This Game</h3>
+            <p><strong>Sandyland</strong> is a loving 8-bit NES-style tribute game celebrating Papa Sandy's passions:</p>
+            <ul>
+                <li>🏎️ His beloved white Corvette</li>
+                <li>🐴 Love for horses and tropical beaches</li>
+                <li>🛞 Career as tractor tire salesman</li>
+                <li>🏖️ Beach bars and catamarans</li>
+            </ul>
+            
+            <h3>🎮 Game Features</h3>
+            <ul>
+                <li>Complete 8-bit NES-style gameplay</li>
+                <li>Papa Sandy character with tire rolling mechanics</li>
+                <li>Beach Paradise world with Dr.vette storyline</li>
+                <li>Power-ups and visual polish</li>
+                <li>Family-friendly easy difficulty</li>
+            </ul>
+            
+            <h3>🕹️ Controls</h3>
+            <ul>
+                <li><strong>Arrow Keys</strong> / <strong>A/D</strong>: Move left/right</li>
+                <li><strong>Spacebar</strong> / <strong>Up Arrow</strong> / <strong>W</strong>: Jump</li>
+                <li><strong>B</strong>: Roll nearest tire</li>
+            </ul>
+        </div>
+        
+        <div class="status">
+            🚀 The full game is coming soon! This is a placeholder while GitHub Pages is being set up.
+        </div>
     </div>
-    
-    <div id="gameContainer">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-    </div>
-    
-    <script src="game.js"></script>
 </body>
 </html>
