@@ -56,85 +56,34 @@
 </head>
 <body>
     <div id="gameInfo">
-        <div>SANDYLAND - FIXED VERSION</div>
-        <div>Use ARROW KEYS to move, SPACEBAR to jump, B to roll tires</div>
-        <div>Collect power-ups: ⭐ Super Tire | 🏥 Medical Kit | ⚡ Tropical Energy</div>
+        <div>SANDYLAND - LOADING...</div>
+        <div>Please wait while the game loads...</div>
     </div>
     
     <div id="gameContainer">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
     </div>
     
+    <!-- Load the full game -->
+    <script src="game.js"></script>
     <script>
-        // Simple test to verify game initialization
+        // Initialize the game when page loads
         window.addEventListener('load', () => {
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
             const info = document.getElementById('gameInfo');
-            
-            if (canvas && ctx) {
-                // Clear canvas
-                ctx.fillStyle = '#87CEEB';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw ground
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
-                
-                // Draw grass
-                ctx.fillStyle = '#228B22';
-                ctx.fillRect(0, canvas.height - 100, canvas.width, 20);
-                
-                // Draw Papa Sandy (simple rectangle)
-                ctx.fillStyle = '#FF6347';
-                ctx.fillRect(100, canvas.height - 148, 32, 48);
-                
-                // Draw head
-                ctx.fillStyle = '#FDBCB4';
-                ctx.fillRect(108, canvas.height - 160, 16, 12);
-                
-                // Draw hair
-                ctx.fillStyle = '#808080';
-                ctx.fillRect(108, canvas.height - 160, 16, 8);
-                
-                // Draw Hawaiian shirt
-                ctx.fillStyle = '#FF69B4';
-                ctx.fillRect(100, canvas.height - 136, 32, 20);
-                
-                // Draw tires
-                ctx.fillStyle = '#2F4F4F';
-                ctx.fillRect(300, canvas.height - 140, 40, 40);
-                ctx.fillRect(500, canvas.height - 140, 40, 40);
-                
-                // Draw platforms
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(200, canvas.height - 200, 150, 20);
-                ctx.fillRect(450, canvas.height - 250, 120, 20);
-                ctx.fillRect(650, canvas.height - 180, 100, 20);
-                
-                // Draw enemies
-                ctx.fillStyle = '#FF4500';
-                ctx.fillRect(150, canvas.height - 130, 28, 24); // Crab
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(600, canvas.height - 140, 24, 24); // Coconut
-                
-                // Draw barriers
-                ctx.fillStyle = '#696969';
-                ctx.fillRect(250, canvas.height - 160, 30, 60);
-                ctx.fillRect(400, canvas.height - 160, 30, 60);
-                ctx.fillRect(550, canvas.height - 160, 30, 60);
-                
-                // Update info to show game is working
+            try {
+                // Game will initialize automatically when game.js loads
                 info.innerHTML = `
-                    <div>✅ SANDYLAND - GAME WORKING!</div>
+                    <div>✅ SANDYLAND - GAME LOADED!</div>
                     <div>Use ARROW KEYS to move, SPACEBAR to jump, B to roll tires</div>
                     <div>Collect power-ups: ⭐ Super Tire | 🏥 Medical Kit | ⚡ Tropical Energy</div>
                 `;
-                
-                console.log('Sandyland game initialized successfully!');
-            } else {
-                console.error('Canvas not found!');
-                info.innerHTML = '<div style="color: red;">❌ Error: Canvas not found!</div>';
+                console.log('Sandyland game system initialized!');
+            } catch (error) {
+                console.error('Game initialization error:', error);
+                info.innerHTML = `
+                    <div style="color: red;">❌ GAME ERROR</div>
+                    <div>Unable to load game. Please refresh the page.</div>
+                `;
             }
         });
     </script>
