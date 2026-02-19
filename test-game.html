@@ -42,7 +42,7 @@
         <canvas id="gameCanvas" width="800" height="600"></canvas>
     </div>
     <script>
-        // Simple test to verify game initialization
+        // Test to verify game initialization
         window.addEventListener('load', () => {
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
@@ -53,6 +53,11 @@
                 
                 // Try to create game instance
                 try {
+                    // Check if SandylandGame class exists
+                    if (typeof SandylandGame === 'undefined') {
+                        throw new Error('SandylandGame class not found');
+                    }
+                    
                     // Create a simple game test
                     ctx.fillStyle = '#87CEEB';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);

@@ -56,7 +56,7 @@
 </head>
 <body>
     <div id="gameInfo">
-        <div>SANDYLAND - INITIALIZING...</div>
+        <div>SANDYLAND - TESTING...</div>
         <div>Please wait while the game loads...</div>
     </div>
     
@@ -75,21 +75,23 @@
             
             try {
                 // Check if SandylandGame class exists
-                if (typeof SandylandGame !== 'undefined') {
-                    // Create game instance
-                    const game = new SandylandGame();
-                    
-                    // Update info to show game is working
-                    info.innerHTML = `
-                        <div>✅ SANDYLAND - GAME STARTED!</div>
-                        <div>Use ARROW KEYS to move, SPACEBAR to jump, B to roll tires</div>
-                        <div>Collect power-ups: ⭐ Super Tire | 🏥 Medical Kit | ⚡ Tropical Energy</div>
-                    `;
-                    
-                    console.log('Sandyland game started successfully!');
-                } else {
+                if (typeof SandylandGame === 'undefined') {
                     throw new Error('SandylandGame class not found');
                 }
+                
+                console.log('SandylandGame class found:', typeof SandylandGame);
+                
+                // Create game instance
+                const game = new SandylandGame();
+                
+                // Update info to show game is working
+                info.innerHTML = `
+                    <div>✅ SANDYLAND - GAME STARTED!</div>
+                    <div>Use ARROW KEYS to move, SPACEBAR to jump, B to roll tires</div>
+                    <div>Collect power-ups: ⭐ Super Tire | 🏥 Medical Kit | ⚡ Tropical Energy</div>
+                `;
+                
+                console.log('Sandyland game started successfully!');
             } catch (error) {
                 console.error('Game initialization error:', error);
                 info.innerHTML = `
