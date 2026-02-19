@@ -54,6 +54,7 @@ class SandylandGame {
     }
     
     setupEventListeners() {
+        // Keyboard controls for desktop
         document.addEventListener('keydown', (e) => {
             this.keys[e.code] = true;
             
@@ -70,6 +71,113 @@ class SandylandGame {
             this.keys[e.code] = false;
             e.preventDefault();
         });
+        
+        // Touch controls for mobile
+        this.setupTouchControls();
+    }
+    
+    setupTouchControls() {
+        // Create control buttons for mobile
+        if ('ontouchstart' in window) {
+            this.createMobileControls();
+        }
+    }
+    
+    createMobileControls() {
+        // Control panel container
+        const controlPanel = document.createElement('div');
+        controlPanel.style.position = 'fixed';
+        controlPanel.style.bottom = '20px';
+        controlPanel.style.left = '50%';
+        controlPanel.style.transform = 'translateX(-50%)';
+        controlPanel.style.display = 'flex';
+        controlPanel.style.gap = '10px';
+        controlPanel.style.zIndex = '1000';
+        
+        // Left button
+        const leftBtn = document.createElement('button');
+        leftBtn.innerHTML = '←';
+        leftBtn.style.width = '60px';
+        leftBtn.style.height = '60px';
+        leftBtn.style.fontSize = '24px';
+        leftBtn.style.border = '2px solid #333';
+        leftBtn.style.borderRadius = '10px';
+        leftBtn.style.background = '#4CAF50';
+        leftBtn.style.color = 'white';
+        leftBtn.style.cursor = 'pointer';
+        
+        // Right button
+        const rightBtn = document.createElement('button');
+        rightBtn.innerHTML = '→';
+        rightBtn.style.width = '60px';
+        rightBtn.style.height = '60px';
+        rightBtn.style.fontSize = '24px';
+        rightBtn.style.border = '2px solid #333';
+        rightBtn.style.borderRadius = '10px';
+        rightBtn.style.background = '#4CAF50';
+        rightBtn.style.color = 'white';
+        rightBtn.style.cursor = 'pointer';
+        
+        // Jump button
+        const jumpBtn = document.createElement('button');
+        jumpBtn.innerHTML = '⬆️';
+        jumpBtn.style.width = '60px';
+        jumpBtn.style.height = '60px';
+        jumpBtn.style.fontSize = '24px';
+        jumpBtn.style.border = '2px solid #333';
+        jumpBtn.style.borderRadius = '10px';
+        jumpBtn.style.background = '#2196F3';
+        jumpBtn.style.color = 'white';
+        jumpBtn.style.cursor = 'pointer';
+        
+        // Button event handlers
+        const handleButtonStart = (direction) => {
+            this.keys[`Arrow${direction.toUpperCase()}`] = true;
+        };
+        
+        const handleButtonEnd = (direction) => {
+            this.keys[`Arrow${direction.toUpperCase()}`] = false;
+        };
+        
+        // Add event listeners
+        leftBtn.addEventListener('touchstart', () => handleButtonStart('Left'));
+        leftBtn.addEventListener('touchend', () => handleButtonEnd('Left'));
+        leftBtn.addEventListener('mousedown', () => handleButtonStart('Left'));
+        leftBtn.addEventListener('mouseup', () => handleButtonEnd('Left'));
+        
+        rightBtn.addEventListener('touchstart', () => handleButtonStart('Right'));
+        rightBtn.addEventListener('touchend', () => handleButtonEnd('Right'));
+        rightBtn.addEventListener('mousedown', () => handleButtonStart('Right'));
+        rightBtn.addEventListener('mouseup', () => handleButtonEnd('Right'));
+        
+        jumpBtn.addEventListener('touchstart', () => {
+            if (this.papaSandy.onGround) {
+                this.papaSandy.velocityY = -this.papaSandy.jumpPower;
+                this.papaSandy.onGround = false;
+            }
+        });
+        jumpBtn.addEventListener('mousedown', () => {
+            if (this.papaSandy.onGround) {
+                this.papaSandy.velocityY = -this.papaSandy.jumpPower;
+                this.papaSandy.onGround = false;
+            }
+        });
+        
+        // Add buttons to control panel
+        controlPanel.appendChild(leftBtn);
+        controlPanel.appendChild(jumpBtn);
+        controlPanel.appendChild(rightBtn);
+        
+        // Add to document
+        document.body.appendChild(controlPanel);
+        
+        // Store references for cleanup
+        this.mobileControls = {
+            panel: controlPanel,
+            left: leftBtn,
+            right: rightBtn,
+            jump: jumpBtn
+        };
     }
     
     update() {
