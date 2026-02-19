@@ -9,11 +9,104 @@ class SandylandGame {
         this.gravity = 0.8;
         this.friction = 0.8;
         this.groundY = 500;
-        this.gamePhase = 2;
+        this.gamePhase = 6; // Enhanced Phase 6
         
-        // Game states: SPLASH, STORY, PLAYING, PAUSED, GAME_OVER, VICTORY
+        // Game states: SPLASH, MENU, STORY, PLAYING, PAUSED, GAME_OVER, VICTORY
         this.gameState = 'SPLASH';
         this.stateStartTime = Date.now();
+        
+        // Phase 6: Difficulty System
+        this.difficultySettings = {
+            easy: {
+                name: "Easy Mode",
+                description: "Perfect for beginners and family play",
+                settings: {
+                    playerHitBoxMultiplier: 1.5,
+                    enemySpeedMultiplier: 0.7,
+                    powerUpFrequency: 1.5,
+                    lives: 5,
+                    jumpPower: 1.2,
+                    tireRollSpeed: 0.8,
+                    platformWidthMultiplier: 1.3,
+                    enemyDamage: 0.5
+                }
+            },
+            medium: {
+                name: "Medium Mode", 
+                description: "Balanced challenge for experienced players",
+                settings: {
+                    playerHitBoxMultiplier: 1.0,
+                    enemySpeedMultiplier: 1.0,
+                    powerUpFrequency: 1.0,
+                    lives: 3,
+                    jumpPower: 1.0,
+                    tireRollSpeed: 1.0,
+                    platformWidthMultiplier: 1.0,
+                    enemyDamage: 1.0
+                }
+            },
+            hard: {
+                name: "Hard Mode",
+                description: "Ultimate challenge for expert players",
+                settings: {
+                    playerHitBoxMultiplier: 0.7,
+                    enemySpeedMultiplier: 1.5,
+                    powerUpFrequency: 0.6,
+                    lives: 1,
+                    jumpPower: 0.9,
+                    tireRollSpeed: 1.3,
+                    platformWidthMultiplier: 0.8,
+                    enemyDamage: 1.5
+                }
+            }
+        };
+        
+        this.selectedDifficulty = 'medium';
+        this.showingDifficultyMenu = false;
+        
+        // Phase 6: World System
+        this.currentWorld = 1;
+        this.completedWorlds = new Set();
+        this.worldProgress = {
+            1: { levels: [false, false, false, false], unlocked: true },
+            2: { levels: [false, false, false, false], unlocked: false },
+            3: { levels: [false, false, false, false], unlocked: false }
+        };
+        
+        // Phase 6: Enhanced Story System
+        this.storySequences = {
+            opening: null,
+            worldTransitions: {},
+            characterInteractions: [],
+            drVetteBackstory: false
+        };
+        
+        // Phase 6: World-specific configurations
+        this.worldConfigs = {
+            1: { // Beach World
+                name: "Beach Paradise",
+                background: "beach-sunset",
+                music: "tropical",
+                papaSandyOutfit: "hawaiian",
+                theme: "retirement_florida"
+            },
+            2: { // Cowboy World  
+                name: "Cowboy Country",
+                background: "western-sunset",
+                music: "country",
+                papaSandyOutfit: "western",
+                theme: "younger_adventures"
+            },
+            3: { // Jungle World
+                name: "Tropical Jungle",
+                background: "jungle-dense",
+                music: "jungle",
+                papaSandyOutfit: "explorer",
+                theme: "paradise_restoration"
+            }
+        };
+        
+        this.currentWorldConfig = this.worldConfigs[1];
         
         // Victory screen properties
         this.victoryScreen = {
@@ -351,6 +444,23 @@ class SandylandGame {
             // Handle victory screen progression
             if (this.gameState === 'VICTORY' && e.code === 'Space') {
                 this.restartGame();
+                e.preventDefault();
+            }
+            
+            // Phase 6: Enhanced menu handling
+            if (this.gameState === 'MENU') {
+                if (this.menuType === 'difficulty') {
+                    this.handleDifficultyMenuInput(e);
+                } else if (this.menuType === 'world') {
+                    this.handleWorldMenuInput(e);
+                }
+                e.preventDefault();
+            }
+            
+            // Handle escape from menus
+            if (e.code === 'Escape' && this.gameState === 'MENU') {
+                this.gameState = 'SPLASH';
+                this.showingDifficultyMenu = false;
                 e.preventDefault();
             }
             
@@ -809,6 +919,208 @@ class SandylandGame {
                 this.activePowerUps.splice(i, 1);
             }
         }
+    }
+    
+    // Phase 6: Difficulty and World Management Methods
+    showDifficultyMenu() {
+        this.gameState = 'MENU';
+        this.showingDifficultyMenu = true;
+        this.menuType = 'difficulty';
+    }
+    
+    selectDifficulty(difficulty) {
+        this.selectedDifficulty = difficulty;
+        this.applyDifficultySettings();
+        this.startWorld();
+    }
+    
+    applyDifficultySettings() {
+        const difficulty = this.difficultySettings[this.selectedDifficulty];
+        const settings = difficulty.settings;
+        
+        // Apply difficulty settings to game mechanics
+        this.papaSandy.speed = 4 * settings.tireRollSpeed;
+        this.papaSandy.jumpPower = 15 * settings.jumpPower;
+        this.lives = settings.lives;
+        
+        // Apply settings to existing enemies and platforms
+        if (this.enemies) {
+            this.enemies.forEach(enemy => {
+                enemy.speed = (enemy.baseSpeed || 2) * settings.enemySpeedMultiplier;
+                enemy.damage = (enemy.baseDamage || 1) * settings.enemyDamage;
+            });
+        }
+        
+        if (this.platforms) {
+            this.platforms.forEach(platform => {
+                if (platform.widthMultiplier) {
+                    platform.width *= settings.platformWidthMultiplier;
+                }
+            });
+        }
+    }
+    
+    switchToWorld(worldNumber) {
+        if (worldNumber >= 1 && worldNumber <= 3) {
+            this.currentWorld = worldNumber;
+            this.currentWorldConfig = this.worldConfigs[worldNumber];
+            this.playWorldTransition(worldNumber);
+            this.loadWorldAssets(worldNumber);
+        }
+    }
+    
+    playWorldTransition(worldNumber) {
+        // Create world transition effect
+        this.transitionEffect = {
+            isActive: true,
+            startTime: Date.now(),
+            duration: 2000,
+            worldNumber: worldNumber,
+            fadeAlpha: 1.0
+        };
+        
+        // Play transition sound
+        this.sounds.worldTransition();
+    }
+    
+    loadWorldAssets(worldNumber) {
+        const world = this.worldConfigs[worldNumber];
+        
+        // Update background and theme
+        this.background = world.background;
+        this.currentTheme = world.theme;
+        
+        // Update Papa Sandy's outfit based on world
+        this.papaSandy.currentOutfit = world.papaSandyOutfit;
+        
+        // Load world-specific story elements
+        this.loadWorldStoryElements(worldNumber);
+    }
+    
+    // Phase 6: Menu Input Handling
+    handleDifficultyMenuInput(e) {
+        if (e.code === 'ArrowUp') {
+            const difficulties = ['easy', 'medium', 'hard'];
+            const currentIndex = difficulties.indexOf(this.selectedDifficulty);
+            this.selectedDifficulty = difficulties[(currentIndex - 1 + difficulties.length) % difficulties.length];
+            e.preventDefault();
+        } else if (e.code === 'ArrowDown') {
+            const difficulties = ['easy', 'medium', 'hard'];
+            const currentIndex = difficulties.indexOf(this.selectedDifficulty);
+            this.selectedDifficulty = difficulties[(currentIndex + 1) % difficulties.length];
+            e.preventDefault();
+        } else if (e.code === 'Space' || e.code === 'Enter') {
+            this.selectDifficulty(this.selectedDifficulty);
+            e.preventDefault();
+        }
+    }
+    
+    handleWorldMenuInput(e) {
+        if (e.code === 'ArrowUp') {
+            if (this.currentWorld > 1) {
+                this.currentWorld--;
+                while (!this.worldProgress[this.currentWorld].unlocked && this.currentWorld > 1) {
+                    this.currentWorld--;
+                }
+            }
+            e.preventDefault();
+        } else if (e.code === 'ArrowDown') {
+            if (this.currentWorld < 3) {
+                this.currentWorld++;
+                while (!this.worldProgress[this.currentWorld].unlocked && this.currentWorld < 3) {
+                    this.currentWorld++;
+                }
+            }
+            e.preventDefault();
+        } else if (e.code === 'Space' || e.code === 'Enter') {
+            if (this.worldProgress[this.currentWorld].unlocked) {
+                this.startWorld();
+            }
+            e.preventDefault();
+        }
+    }
+    
+    // Phase 6: Enhanced Story Navigation
+    advanceStory() {
+        if (this.gameState === 'SPLASH') {
+            this.gameState = 'MENU';
+            this.menuType = 'difficulty';
+            this.showingDifficultyMenu = true;
+        } else if (this.gameState === 'STORY') {
+            if (this.storySequence === 'world_start' && this.currentStoryTexts) {
+                this.currentStoryIndex++;
+                if (this.currentStoryIndex >= this.currentStoryTexts.length) {
+                    this.gameState = 'PLAYING';
+                    this.loadLevel(1); // Load first level of current world
+                }
+            }
+        } else if (this.gameState === 'MENU') {
+            if (this.menuType === 'difficulty') {
+                // Start the game with selected difficulty
+                this.selectDifficulty(this.selectedDifficulty);
+            }
+        }
+    }
+    
+    loadWorldStoryElements(worldNumber) {
+        const worldStories = {
+            1: [ // Beach World
+                "Welcome to Beach Paradise! Papa Sandy's retirement years in Florida...",
+                "The sandy beaches remind Papa Sandy of his peaceful retirement days.",
+                "Dr.vette's beach front clinic is just ahead! Be careful!"
+            ],
+            2: [ // Cowboy World
+                "Howdy partner! Welcome to Cowboy Country!",
+                "This brings back memories of Papa Sandy's younger adventurous days.",
+                "Watch out for Dr.vette's cowboy minions and lasso traps!",
+                "Yeehaw! Let's round up those tires!"
+            ],
+            3: [ // Jungle World
+                "The dense jungle holds many secrets and challenges.",
+                "Dr.vette's veterinary fortress is hidden deep within these jungles.",
+                "Papa Sandy must use all his skills to rescue his Corvette!",
+                "This tropical paradise must be saved!"
+            ]
+        };
+        
+        this.currentStoryTexts = worldStories[worldNumber] || [];
+        this.currentStoryIndex = 0;
+    }
+    
+    showWorldComplete(worldNumber) {
+        this.worldProgress[worldNumber].levels.forEach((level, index) => {
+            if (level) {
+                this.worldProgress[worldNumber].levels[index] = true;
+            }
+        });
+        
+        // Unlock next world
+        if (worldNumber < 3) {
+            this.worldProgress[worldNumber + 1].unlocked = true;
+        }
+        
+        this.completedWorlds.add(worldNumber);
+        this.showVictoryScreen(true);
+    }
+    
+    startWorld() {
+        this.gameState = 'STORY';
+        this.storySequence = 'world_start';
+        this.stateStartTime = Date.now();
+        
+        // Apply world-specific settings
+        this.switchToWorld(this.currentWorld);
+        
+        // Reset game state for new world
+        this.score = 0;
+        this.enemiesDefeated = 0;
+        this.barriersDestroyed = 0;
+        this.powerUpsCollected = 0;
+        this.gameStartTime = Date.now();
+        this.papaSandy.x = 100;
+        this.papaSandy.y = this.groundY;
+        this.papaSandy.velocityX = 0;
+        this.papaSandy.velocityY = 0;
     }
     
     update() {
@@ -1622,6 +1934,67 @@ class SandylandGame {
                 setTimeout(() => this.render(), 16); // Cap at ~60 FPS
             });
         }
+        
+        // Phase 6: Enhanced rendering for different game states
+        } else {
+            // Render based on game state
+            switch (this.gameState) {
+                case 'SPLASH':
+                    this.drawSplashScreen();
+                    break;
+                case 'MENU':
+                    if (this.menuType === 'difficulty') {
+                        this.drawDifficultyMenu();
+                    } else if (this.menuType === 'world') {
+                        this.drawWorldMenu();
+                    }
+                    break;
+                case 'STORY':
+                    this.drawEnhancedStoryScreen();
+                    break;
+                case 'PLAYING':
+                    // Draw game elements
+                    this.drawBackground();
+                    this.drawBarriers();
+                    this.drawTires();
+                    this.drawPowerUps();
+                    this.drawParticles();
+                    this.drawEnemies();
+                    this.drawPapaSandy();
+                    this.drawEnhancedUI();
+                    break;
+                case 'PAUSED':
+                    this.drawGameElements();
+                    this.drawPauseMenu();
+                    break;
+                case 'VICTORY':
+                    this.drawGameElements();
+                    this.drawVictoryScreen();
+                    break;
+                case 'GAME_OVER':
+                    this.drawGameOverScreen();
+                    break;
+            }
+        }
+        
+        this.ctx.restore();
+        
+        // Performance monitoring
+        if (this.performanceMonitor) {
+            this.performanceMonitor.endRender();
+        }
+    }
+    
+    // Phase 6: Helper method to draw game elements when needed
+    drawGameElements() {
+        this.drawBackground();
+        this.drawBarriers();
+        this.drawTires();
+        this.drawPowerUps();
+        this.drawParticles();
+        this.drawEnemies();
+        this.drawPapaSandy();
+        this.drawEnhancedUI();
     }
     
     drawVictoryScreen() {
@@ -2114,6 +2487,229 @@ class SandylandGame {
         this.ctx.fillStyle = '#00FFFF';
         this.ctx.font = '12px Courier New';
         this.ctx.fillText(`Time: ${gameTime}s`, this.canvas.width - 80, 30);
+    }
+    
+    // Phase 6: Enhanced Menu Rendering
+    drawDifficultyMenu() {
+        // Semi-transparent overlay
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Title
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.font = 'bold 32px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('SELECT DIFFICULTY', this.canvas.width / 2, 80);
+        
+        // Difficulty options
+        const difficulties = ['easy', 'medium', 'hard'];
+        const difficultyNames = ['Easy Mode', 'Medium Mode', 'Hard Mode'];
+        const difficultyDescs = [
+            'Perfect for beginners and family play',
+            'Balanced challenge for experienced players', 
+            'Ultimate challenge for expert players'
+        ];
+        
+        difficulties.forEach((diff, index) => {
+            const y = 150 + index * 100;
+            const isSelected = diff === this.selectedDifficulty;
+            
+            // Highlight selected option
+            if (isSelected) {
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.fillRect(this.canvas.width / 2 - 200, y - 30, 400, 60);
+            }
+            
+            // Difficulty name
+            this.ctx.fillStyle = isSelected ? '#000000' : '#FFFFFF';
+            this.ctx.font = 'bold 20px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(difficultyNames[index], this.canvas.width / 2, y);
+            
+            // Description
+            this.ctx.fillStyle = isSelected ? '#CCCCCC' : '#AAAAAA';
+            this.ctx.font = '14px Courier New';
+            this.ctx.fillText(difficultyDescs[index], this.canvas.width / 2, y + 20);
+        });
+        
+        // Instructions
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '16px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Use ARROW KEYS to select, SPACEBAR to confirm', this.canvas.width / 2, this.canvas.height - 50);
+        this.ctx.fillText('Press ESCAPE to return to story', this.canvas.width / 2, this.canvas.height - 25);
+    }
+    
+    drawWorldMenu() {
+        // Semi-transparent overlay
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Title
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.font = 'bold 32px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('SELECT WORLD', this.canvas.width / 2, 80);
+        
+        // World options
+        const worlds = [1, 2, 3];
+        const worldNames = ['Beach Paradise', 'Cowboy Country', 'Tropical Jungle'];
+        const worldDescs = [
+            'Papa Sandy\'s retirement years in Florida',
+            'Papa Sandy\'s younger adventurous days',
+            'The final battle in Dr.vette\'s fortress'
+        ];
+        
+        worlds.forEach((worldNum, index) => {
+            const y = 150 + index * 100;
+            const isUnlocked = this.worldProgress[worldNum].unlocked;
+            const isCompleted = this.completedWorlds.has(worldNum);
+            
+            // Highlight selected option
+            if (this.currentWorld === worldNum && isUnlocked) {
+                this.ctx.fillStyle = isCompleted ? '#90EE90' : '#FFD700';
+                this.ctx.fillRect(this.canvas.width / 2 - 200, y - 30, 400, 60);
+            }
+            
+            // World name
+            this.ctx.fillStyle = isUnlocked ? '#FFFFFF' : '#666666';
+            this.ctx.font = isUnlocked ? 'bold 20px Courier New' : '16px Courier New';
+            this.ctx.textAlign = 'center';
+            
+            const name = worldNames[index];
+            const status = isCompleted ? ' ✓ COMPLETED' : isUnlocked ? '' : ' 🔒 LOCKED';
+            this.ctx.fillText(name + status, this.canvas.width / 2, y);
+            
+            // Description
+            this.ctx.fillStyle = isUnlocked ? '#CCCCCC' : '#888888';
+            this.ctx.font = '14px Courier New';
+            this.ctx.fillText(worldDescs[index], this.canvas.width / 2, y + 20);
+        });
+        
+        // Instructions
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '16px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Use ARROW KEYS to select, SPACEBAR to confirm', this.canvas.width / 2, this.canvas.height - 50);
+        this.ctx.fillText('Press ESCAPE to return to main menu', this.canvas.width / 2, this.canvas.height - 25);
+    }
+    
+    drawEnhancedStoryScreen() {
+        const currentTime = Date.now();
+        const elapsed = currentTime - this.stateStartTime;
+        
+        // Semi-transparent overlay
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // World-specific background
+        this.drawWorldBackground();
+        
+        // Story text
+        if (this.storySequence === 'world_start' && this.currentStoryTexts) {
+            if (this.currentStoryIndex < this.currentStoryTexts.length) {
+                const storyText = this.currentStoryTexts[this.currentStoryIndex];
+                
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.font = 'bold 24px Courier New';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('WORLD ' + this.currentWorld, this.canvas.width / 2, 100);
+                
+                this.ctx.fillStyle = '#FFFFFF';
+                this.ctx.font = '18px Courier New';
+                this.ctx.textAlign = 'center';
+                
+                // Word wrap for long text
+                const words = storyText.split(' ');
+                let line = '';
+                let y = 200;
+                
+                words.forEach(word => {
+                    const testLine = line + word + ' ';
+                    const metrics = this.ctx.measureText(testLine);
+                    
+                    if (metrics.width > this.canvas.width - 100 && line !== '') {
+                        this.ctx.fillText(line, this.canvas.width / 2, y);
+                        line = word + ' ';
+                        y += 30;
+                    } else {
+                        line = testLine;
+                    }
+                });
+                this.ctx.fillText(line, this.canvas.width / 2, y);
+                
+                // Continue prompt
+                if (elapsed > 3000) {
+                    this.ctx.fillStyle = '#FFD700';
+                    this.ctx.font = '16px Courier New';
+                    this.ctx.fillText('Press SPACEBAR to continue...', this.canvas.width / 2, this.canvas.height - 100);
+                }
+            }
+        }
+        
+        // Papa Sandy character based on world
+        this.drawPapaSandyStoryPose();
+    }
+    
+    drawWorldBackground() {
+        // Simple world-specific background gradients
+        switch (this.currentWorld) {
+            case 1: // Beach
+                const beachGradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                beachGradient.addColorStop(0, '#FFE4B5');
+                beachGradient.addColorStop(0.6, '#87CEEB');
+                beachGradient.addColorStop(1, '#F0E68C');
+                this.ctx.fillStyle = beachGradient;
+                break;
+            case 2: // Cowboy
+                const cowboyGradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                cowboyGradient.addColorStop(0, '#FF6347');
+                cowboyGradient.addColorStop(0.6, '#DEB887');
+                cowboyGradient.addColorStop(1, '#8B4513');
+                this.ctx.fillStyle = cowboyGradient;
+                break;
+            case 3: // Jungle
+                const jungleGradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                jungleGradient.addColorStop(0, '#228B22');
+                jungleGradient.addColorStop(0.6, '#006400');
+                jungleGradient.addColorStop(1, '#8B4513');
+                this.ctx.fillStyle = jungleGradient;
+                break;
+        }
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+    
+    drawPapaSandyStoryPose() {
+        const x = this.canvas.width / 2 - 50;
+        const y = this.canvas.height - 200;
+        
+        // Draw Papa Sandy in world-specific outfit
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.fillRect(x, y, 100, 120);
+        
+        // Add world-specific accessories
+        switch (this.currentWorld) {
+            case 1: // Beach - Hawaiian shirt pattern
+                this.ctx.fillStyle = '#FF6347';
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 2; j++) {
+                        this.ctx.fillRect(x + 10 + i * 30, y + 20 + j * 30, 20, 20);
+                    }
+                }
+                break;
+            case 2: // Cowboy - Western shirt
+                this.ctx.fillStyle = '#8B4513';
+                this.ctx.fillRect(x + 10, y + 20, 80, 40);
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.fillRect(x + 40, y + 10, 20, 10); // Cowboy hat
+                break;
+            case 3: // Explorer - Safari outfit
+                this.ctx.fillStyle = '#8B4513';
+                this.ctx.fillRect(x + 40, y + 10, 20, 10); // Explorer hat
+                this.ctx.fillStyle = '#228B22';
+                this.ctx.fillRect(x + 10, y + 20, 80, 40);
+                break;
+        }
     }
     
     gameLoop() {
