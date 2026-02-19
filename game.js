@@ -4,12 +4,57 @@ class SandylandGame {
         this.ctx = this.canvas.getContext('2d');
         this.ctx.imageSmoothingEnabled = false;
         
-        // Game state
+        // Game state management
         this.keys = {};
         this.gravity = 0.8;
         this.friction = 0.8;
         this.groundY = 500;
         this.gamePhase = 2;
+        
+        // Game states: SPLASH, STORY, PLAYING, PAUSED, GAME_OVER, VICTORY
+        this.gameState = 'SPLASH';
+        this.stateStartTime = Date.now();
+        
+        // Splash screen properties
+        this.splashScreen = {
+            title: "SANDYLAND",
+            subtitle: "Papa Sandy's Corvette Rescue Mission",
+            currentLine: 0,
+            lines: [
+                "",
+                "",
+                "A loving tribute to Papa Sandy",
+                "",
+                "",
+                "Once upon a time in the tropical paradise...",
+                "",
+                "Papa Sandy, with his signature grey hair",
+                "and colorful Hawaiian shirt, finally",
+                "achieved his dream - a beautiful white Corvette!",
+                "",
+                "But his ex-wife, the jealous Dr.vette,",
+                "was furious that he finally had what she",
+                "never let him have during their marriage.",
+                "",
+                "In a fit of spite, she stole his prized",
+                "Corvette and hid it in her secret veterinary",
+                "clinic fortress deep in the tropical jungle!",
+                "",
+                "Now Papa Sandy must use his tire-rolling",
+                "skills from his days as a tractor tire",
+                "salesman to rescue his beloved car!",
+                "",
+                "",
+                "Are you ready to help Papa Sandy",
+                "save his Corvette and restore",
+                "the tropical paradise?",
+                "",
+                "",
+                "Press SPACEBAR to begin your adventure!"
+            ],
+            typewriterSpeed: 80,
+            lastLineTime: 0
+        };
         
         // Papa Sandy character
         this.papaSandy = {
@@ -35,6 +80,69 @@ class SandylandGame {
             hasFacialHair: false,
             wearsHawaiianShirt: true
         };
+        
+        // Pause menu properties
+        this.pauseMenu = {
+            isActive: false,
+            selectedIndex: 0,
+            options: [
+                "RESUME GAME",
+                "RESTART STORY",
+                "VIEW STORY",
+                "QUIT TO MENU"
+            ]
+        };
+        
+        // Story presentation system
+        this.storySequences = [
+            {
+                id: "opening",
+                title: "The Rescue Mission Begins",
+                text: [
+                    "Papa Sandy stands at the edge of Sandyland,",
+                    "determined to rescue his beloved Corvette.",
+                    "",
+                    "The tropical breeze rustles through the palm",
+                    "trees as he prepares for his adventure.",
+                    "",
+                    "His years as a tractor tire salesman have",
+                    "prepared him for this moment - the tire",
+                    "rolling skills will be crucial!"
+                ],
+                trigger: "game_start"
+            },
+            {
+                id: "first_powerup",
+                title: "A Helping Hand",
+                text: [
+                    "Papa Sandy discovers a magical tire!",
+                    "This Super Tire will help him roll",
+                    "faster and break through barriers!",
+                    "",
+                    "With his enhanced abilities, nothing",
+                    "can stop him from reaching Dr.vette's",
+                    "clinic fortress!"
+                ],
+                trigger: "first_powerup"
+            },
+            {
+                id: "barrier_break",
+                title: "Breaking Through",
+                text: [
+                    "Using his tire-rolling expertise,",
+                    "Papa Sandy smashes through the",
+                    "barriers blocking his path.",
+                    "",
+                    "The sound of breaking barriers echoes",
+                    "through Sandyland as he gets closer",
+                    "to his goal!"
+                ],
+                trigger: "barrier_break"
+            }
+        ];
+        
+        this.currentStorySequence = null;
+        this.storySequenceStartTime = 0;
         
         // Tractor tires for rolling mechanics
         this.tires = [
@@ -154,6 +262,39 @@ class SandylandGame {
     setupEventListeners() {
         document.addEventListener('keydown', (e) => {
             this.keys[e.code] = true;
+            
+            // Handle pause menu (ESC or P key)
+            if ((e.code === 'Escape' || e.code === 'KeyP') && this.gameState === 'PLAYING') {
+                this.togglePause();
+                e.preventDefault();
+            }
+            
+            // Handle pause menu navigation
+            if (this.gameState === 'PAUSED') {
+                if (e.code === 'ArrowUp') {
+                    this.pauseMenu.selectedIndex = (this.pauseMenu.selectedIndex - 1 + this.pauseMenu.options.length) % this.pauseMenu.options.length;
+                    e.preventDefault();
+                } else if (e.code === 'ArrowDown') {
+                    this.pauseMenu.selectedIndex = (this.pauseMenu.selectedIndex + 1) % this.pauseMenu.options.length;
+                    e.preventDefault();
+                } else if (e.code === 'Enter' || e.code === 'Space') {
+                    this.handlePauseMenuSelection();
+                    e.preventDefault();
+                }
+            }
+            
+            // Handle splash screen progression
+            if (this.gameState === 'SPLASH' && e.code === 'Space') {
+                this.advanceStory();
+                e.preventDefault();
+            }
+            
+            // Handle story screen progression
+            if (this.gameState === 'STORY' && e.code === 'Space') {
+                this.advanceStory();
+                e.preventDefault();
+            }
+            
             e.preventDefault();
         });
         
