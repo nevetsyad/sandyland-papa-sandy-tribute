@@ -2005,8 +2005,8 @@ A tribute to Papa Sandy's legacy.`
         
         const storyLines = this.stories[this.storyMode].split('\n');
         const lineHeight = 30;
-        // Start a little lower on screen, then scroll upward continuously.
-        const startY = 160;
+        // Start noticeably lower on screen, then scroll upward continuously.
+        const startY = 220;
 
         for (let i = 0; i < storyLines.length; i++) {
             const lineY = startY + (i * lineHeight) - this.storyScrollY;
