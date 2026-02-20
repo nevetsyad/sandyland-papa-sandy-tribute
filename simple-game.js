@@ -1097,7 +1097,8 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.save();
         this.ctx.translate(this.papaSandy.x, 0);
 
-        if (this.papaSandy.direction === -1) {
+        // Sprite source art faces left by default, so mirror when moving right.
+        if (this.papaSandy.direction === 1) {
             this.ctx.translate(this.papaSandy.width, 0);
             this.ctx.scale(-1, 1);
         }
