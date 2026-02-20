@@ -26,7 +26,7 @@ class SandylandGame {
         this.storyMode = 'LEGEND'; // INTRO, LEGEND, WORLD_1, WORLD_2, WORLD_3, VICTORY
         this.storyText = '';
         this.storyTimer = 0;
-        this.storySpeed = 1;
+        this.storySpeed = 0.45;
         this.storyScrollY = 0;
         this.storyMaxScroll = 0;
         this.storyAutoScroll = true;
@@ -70,9 +70,7 @@ Throw tire: T
 
 Press SPACE / ENTER / TAP to start!`,
 
-            WORLD_1: `WORLD 1: BEACH PARADISE
-
-Papa Sandy arrives at the sunny beaches where
+            WORLD_1: `Papa Sandy arrives at the sunny beaches where
 he once sold tires to tourists.
 
 The crabs here are angry about beach pollution,
@@ -83,9 +81,7 @@ Collect 2 stars to unlock the next area.
 
 Press SPACE to continue!`,
 
-            WORLD_2: `WORLD 2: COWBOY COUNTRY
-
-The journey takes Papa Sandy to the wild west,
+            WORLD_2: `The journey takes Papa Sandy to the wild west,
 where tumbleweeds roll across the desert.
 
 Dr.vette's coconut bombs drop from above,
@@ -96,9 +92,7 @@ Push tires to create bridges and defeat enemies.
 
 Press SPACE to continue!`,
 
-            WORLD_3: `WORLD 3: TROPICAL JUNGLE
-
-Deep in the jungle awaits Dr.vette's fortress!
+            WORLD_3: `Deep in the jungle awaits Dr.vette's fortress!
 Monkey minions swing from the trees above.
 
 This is the final challenge before facing
