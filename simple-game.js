@@ -107,6 +107,7 @@ A tribute to Papa Sandy's legacy.`
         
         // World management
         this.currentWorld = 1; // 1: Beach Paradise, 2: Cowboy Country, 3: Tropical Jungle
+        this.totalWorlds = 3;
         this.worldNames = {
             1: "Beach Paradise",
             2: "Cowboy Country", 
@@ -146,6 +147,7 @@ A tribute to Papa Sandy's legacy.`
         // Level completion flag
         this.levelCompleted = false;
         this.levelCompletionThreshold = 2; // Need to collect 2 stars
+        this.checkpoint = { x: 100, y: this.groundY - this.papaSandy.height, world: 1 };
         
         this.setupEventListeners();
         this.initializeAudio();
@@ -445,6 +447,9 @@ A tribute to Papa Sandy's legacy.`
                 ];
                 break;
         }
+
+        this.initializeTires();
+        this.checkpoint = { x: 100, y: this.groundY - this.papaSandy.height, world: this.currentWorld };
     }
     
     setupEventListeners() {
@@ -454,7 +459,21 @@ A tribute to Papa Sandy's legacy.`
             
             // Skip story mode with any key
             if (this.gameState === 'SPLASH') {
-                this.startGame();
+                this.handleStorySkip();
+                return;
+            }
+
+            // Restart flow from terminal states
+            if (this.gameState === 'GAME_OVER' || this.gameState === 'WIN') {
+                if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyR') {
+                    this.restartGame();
+                }
+                return;
+            }
+
+            // Advance flow after level completion
+            if (this.gameState === 'PLAYING' && this.levelCompleted && (e.code === 'Space' || e.code === 'Enter')) {
+                this.nextLevel();
                 return;
             }
             
@@ -465,7 +484,7 @@ A tribute to Papa Sandy's legacy.`
             }
             
             // Handle menu toggle
-            if (e.code === 'Escape' && this.gameState === 'PLAYING') {
+            if (e.code === 'Escape' && (this.gameState === 'PLAYING' || this.gameState === 'PAUSED')) {
                 this.toggleMenu();
             }
             
@@ -491,7 +510,7 @@ A tribute to Papa Sandy's legacy.`
         document.addEventListener('touchstart', (e) => {
             if (this.gameState === 'SPLASH') {
                 e.preventDefault();
-                this.startGame();
+                this.handleStorySkip();
             }
         });
         
@@ -626,6 +645,8 @@ A tribute to Papa Sandy's legacy.`
         
         // Don't update game logic if in story mode
         if (this.gameState === 'SPLASH') return;
+        if (this.gameState !== 'PLAYING') return;
+        if (this.levelCompleted) return;
         
         // Handle horizontal movement
         if (this.keys['ArrowLeft'] || this.keys['KeyA']) {
@@ -756,6 +777,9 @@ A tribute to Papa Sandy's legacy.`
                     // Check if Papa Sandy died
                     if (this.papaSandy.health <= 0) {
                         this.gameState = 'GAME_OVER';
+                        this.stopBackgroundMusic();
+                    } else {
+                        this.respawnAtCheckpoint();
                     }
                 }
             }
@@ -965,12 +989,45 @@ A tribute to Papa Sandy's legacy.`
             this.ctx.textAlign = 'center';
             this.ctx.fillText('LEVEL COMPLETE!', this.canvas.width/2, this.canvas.height/2);
             this.ctx.font = '16px Courier New';
-            this.ctx.fillText('Press SPACE to advance to ' + this.worldNames[this.currentWorld % 3 + 1], this.canvas.width/2, this.canvas.height/2 + 40);
-            
-            // Check for space press to advance to next level
-            if (this.keys['Space']) {
-                this.nextLevel();
+            if (this.currentWorld < this.totalWorlds) {
+                this.ctx.fillText('Press SPACE to advance to ' + this.worldNames[this.currentWorld + 1], this.canvas.width/2, this.canvas.height/2 + 40);
+            } else {
+                this.ctx.fillText('Press SPACE to rescue the Corvette!', this.canvas.width/2, this.canvas.height/2 + 40);
             }
+        }
+
+        // Draw paused, lose, and win overlays
+        if (this.gameState === 'PAUSED') {
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = '#FFFFFF';
+            this.ctx.font = '32px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
+            this.ctx.font = '16px Courier New';
+            this.ctx.fillText('Press ESC to resume', this.canvas.width / 2, this.canvas.height / 2 + 40);
+        } else if (this.gameState === 'GAME_OVER') {
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = '#FF4D4D';
+            this.ctx.font = '36px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2);
+            this.ctx.fillStyle = '#FFFFFF';
+            this.ctx.font = '16px Courier New';
+            this.ctx.fillText('Press R / ENTER / SPACE to restart', this.canvas.width / 2, this.canvas.height / 2 + 40);
+        } else if (this.gameState === 'WIN') {
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = '#FFD700';
+            this.ctx.font = '34px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('VICTORY!', this.canvas.width / 2, this.canvas.height / 2 - 20);
+            this.ctx.fillStyle = '#FFFFFF';
+            this.ctx.font = '18px Courier New';
+            this.ctx.fillText('Papa Sandy rescued his Corvette!', this.canvas.width / 2, this.canvas.height / 2 + 12);
+            this.ctx.font = '16px Courier New';
+            this.ctx.fillText('Press R / ENTER / SPACE to play again', this.canvas.width / 2, this.canvas.height / 2 + 46);
         }
     }
     
@@ -981,26 +1038,25 @@ A tribute to Papa Sandy's legacy.`
     }
     
     nextLevel() {
-        // Advance to next world
-        this.currentWorld = (this.currentWorld % 3) + 1;
-        
-        // Reset level completion flag
-        this.levelCompleted = false;
-        
-        // Reinitialize the new world
-        this.initializeWorld(this.currentWorld);
-        
-        // Reset Papa Sandy position
-        this.papaSandy.x = 100;
-        this.papaSandy.y = this.groundY;
-        this.papaSandy.velocityX = 0;
-        this.papaSandy.velocityY = 0;
-        
-        // Reset keys
-        this.keys = {};
-        
+        if (!this.levelCompleted || this.gameState !== 'PLAYING') return;
+
         // Add bonus points for world completion
         this.score += 100;
+
+        // Final world completes the game
+        if (this.currentWorld >= this.totalWorlds) {
+            this.levelCompleted = false;
+            this.gameState = 'WIN';
+            this.stopBackgroundMusic();
+            return;
+        }
+
+        // Advance to next world
+        this.currentWorld += 1;
+        this.levelCompleted = false;
+        this.initializeWorld(this.currentWorld);
+        this.resetPlayerForWorldStart();
+        this.showWorldIntro();
     }
     
     // Add method to initialize tires for each world
@@ -1100,6 +1156,42 @@ A tribute to Papa Sandy's legacy.`
         }
     }
     
+    resetPlayerForWorldStart() {
+        this.papaSandy.x = 100;
+        this.papaSandy.y = this.groundY - this.papaSandy.height;
+        this.papaSandy.velocityX = 0;
+        this.papaSandy.velocityY = 0;
+        this.papaSandy.onGround = true;
+        this.papaSandy.invulnerable = false;
+        this.papaSandy.invulnerableTimer = 0;
+        this.checkpoint = {
+            x: this.papaSandy.x,
+            y: this.papaSandy.y,
+            world: this.currentWorld
+        };
+    }
+
+    respawnAtCheckpoint() {
+        this.papaSandy.x = this.checkpoint.x;
+        this.papaSandy.y = this.checkpoint.y;
+        this.papaSandy.velocityX = 0;
+        this.papaSandy.velocityY = 0;
+        this.papaSandy.onGround = true;
+    }
+
+    restartGame() {
+        this.currentWorld = 1;
+        this.score = 0;
+        this.levelCompleted = false;
+        this.gameState = 'PLAYING';
+        this.menuState = 'CLOSED';
+        this.keys = {};
+        this.papaSandy.health = 3;
+        this.initializeWorld(this.currentWorld);
+        this.resetPlayerForWorldStart();
+        this.playBackgroundMusic();
+    }
+
     toggleMenu() {
         if (this.menuState === 'CLOSED') {
             this.menuState = 'PAUSED';
@@ -1111,14 +1203,11 @@ A tribute to Papa Sandy's legacy.`
     }
     
     pauseGame() {
-        // Pause the game by stopping the game loop
         this.gameState = 'PAUSED';
     }
     
     resumeGame() {
-        // Resume the game
         this.gameState = 'PLAYING';
-        this.gameLoop();
     }
     
     pushNearestTire() {
@@ -1166,7 +1255,7 @@ A tribute to Papa Sandy's legacy.`
         // Handle skip with any key
         if (this.keys['Space'] || this.keys['Enter'] || this.keys['Escape'] || 
             Object.values(this.keys).some(key => key === true)) {
-            this.startGame();
+            this.handleStorySkip();
             return;
         }
         
@@ -1244,11 +1333,26 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.fillText('Press any key to skip...', this.canvas.width / 2, this.canvas.height - 50);
     }
     
+    handleStorySkip() {
+        if (this.storyMode === 'INTRO') {
+            this.startGame();
+            return;
+        }
+
+        this.gameState = 'PLAYING';
+        this.playBackgroundMusic();
+    }
+
     startGame() {
         this.gameState = 'PLAYING';
         this.storyMode = 'WORLD_1';
         this.playBackgroundMusic();
+        this.currentWorld = 1;
+        this.score = 0;
+        this.levelCompleted = false;
+        this.papaSandy.health = 3;
         this.initializeWorld(1);
+        this.resetPlayerForWorldStart();
     }
     
     showWorldIntro() {

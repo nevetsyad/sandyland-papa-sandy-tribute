@@ -1,33 +1,64 @@
 # Sandyland Status Audit (2026-02-20)
 
-## Current Runtime Status (Unified)
-- **Canonical release runtime:** `index.html` → `simple-game.js`
-- **Alternate runtime:** `game.js` remains in-repo for development/reference only (non-canonical)
-- **Deployment clarity:** backup/test entrypoints moved to `archive/` to avoid production confusion
+## Canonical Runtime
+- **Release entrypoint:** `index.html`
+- **Release game runtime:** `simple-game.js`
+- **Non-canonical reference runtime:** `game.js` (kept for development/reference only)
 
-## Phase A Completed
-1. **Runtime path unified**
-   - Confirmed and enforced `index.html` loading `simple-game.js`
-   - Added explicit canonical runtime note in `index.html` and docs
+## Phase A/B Baseline (already completed)
+- Runtime path unified to `index.html` → `simple-game.js`.
+- Alternate HTML entrypoints isolated in `archive/`.
+- Deployment docs aligned to canonical runtime.
 
-2. **Docs aligned with runtime decision**
-   - Updated `README.md` and `github-deployment-guide.md`
-   - Replaced release guidance that implied `game.js` is the main runtime
+## Phase C Completed (feature completion + progression integrity)
 
-3. **Backup/test files isolated (non-destructive)**
-   - Moved to `archive/`: `index-backup.html`, `simple-index.html`, `minimal-index.html`, `game.html`, `test-game.html`, `test-debug.html`, `simple-game-backup.js`, `test-syntax.js`
-   - Added `archive/README.md` to prevent accidental deployment usage
+### 1) World progression and win-path tightened (`simple-game.js`)
+- Added explicit world cap: `totalWorlds = 3`.
+- Fixed progression so World 3 completion ends in **`WIN`** state (no silent loop back to World 1).
+- Moved level-advance trigger out of rendering path and into key-driven gameplay flow.
+- Added terminal state restart controls: `R`, `Enter`, or `Space` from `GAME_OVER` / `WIN`.
 
-4. **Release smoke checklist added**
-   - Added `RELEASE_SMOKE_TEST.md`
+### 2) Coherent gameplay state flow (restart/checkpoint/lose-win)
+- `update()` now only simulates gameplay while `gameState === 'PLAYING'`.
+  - Prevents enemy/player updates during `PAUSED`, `GAME_OVER`, and `WIN`.
+- Removed duplicate game-loop risk by stopping `resumeGame()` from calling `gameLoop()` again.
+- Added structured overlays for:
+  - `PAUSED`
+  - `GAME_OVER`
+  - `WIN`
+- Added world-start checkpoint model:
+  - `checkpoint` set at each world initialization.
+  - On non-lethal hit, Papa Sandy respawns at checkpoint with reduced health.
+- Added explicit `restartGame()` reset path (world, score, health, level flags, keys).
 
-## Syntax Checks (Active JS)
+### 3) Story/world-intro continuity
+- Added `handleStorySkip()` so skipping story behaves correctly:
+  - Intro splash starts a fresh run.
+  - Mid-run world intro splash resumes current run without resetting back to World 1.
+
+### 4) Tire/system consistency fix
+- `initializeWorld()` now always calls `initializeTires()` so world tire mechanics are present as intended.
+
+### 5) Minimal non-flaky scripted sanity checks
+- Added `scripts/phase-c-sanity.js` (Node VM harness with lightweight DOM/canvas stubs).
+- Script verifies key progression/flow invariants:
+  - Intro → World 1 start
+  - World 1 → World 2 intro
+  - World 2 → World 3 intro
+  - World 3 completion → `WIN` (no world loop)
+  - Restart from terminal state
+  - Checkpoint respawn on non-lethal enemy hit
+
+## Validation Run (Phase C)
+- `node scripts/phase-c-sanity.js` ✅
 - `node --check simple-game.js` ✅
 - `node --check game.js` ✅
 - `node --check performance-monitor.js` ✅
 - `node --check levels/level1-1.js` ✅
 
-## Next Recommended Steps
-- Decide whether `game.js` should eventually replace `simple-game.js` or remain a long-term alternate branch.
-- Expand CI beyond syntax checks (e.g., lint/test harness) once runtime is stable.
-- Continue running `RELEASE_SMOKE_TEST.md` against GitHub Pages after each deploy.
+## Remaining Phase D Polish Items
+1. Add an in-game explicit “Play Again” / “Main Menu” button UI for touch-first flows (currently keyboard restart shortcuts only).
+2. Tighten HUD readability (health/stars text overlap at y=90).
+3. Optional: unify story pacing/prompts between intro and world transitions.
+4. Optional: add CI hook to run `scripts/phase-c-sanity.js` + syntax checks on PRs.
+5. Optional: decide long-term fate of `game.js` to reduce maintenance split.
