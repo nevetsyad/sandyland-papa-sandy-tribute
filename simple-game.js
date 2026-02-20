@@ -1993,11 +1993,11 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.fillRect(38, 96, this.canvas.width - 76, this.canvas.height - 200);
 
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = '20px Courier New';
+        this.ctx.font = '18px Courier New';
         this.ctx.textAlign = 'left';
 
         const storyLines = this.stories[this.storyMode].split('\n');
-        const lineHeight = 26;
+        const lineHeight = 24;
         const startY = 145;
 
         for (let i = 0; i < storyLines.length; i++) {
