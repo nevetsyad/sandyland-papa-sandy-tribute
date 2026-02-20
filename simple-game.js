@@ -866,11 +866,8 @@ A tribute to Papa Sandy's legacy.`
         if (this.papaSandy.invulnerable && Math.floor(this.papaSandy.invulnerableTimer / 10) % 2) {
             // Flashing effect when invulnerable
             this.ctx.fillStyle = '#FF69B4';
-        // Normal Papa Sandy appearance
-        if (this.papaSandy.invulnerable && Math.floor(this.papaSandy.invulnerableTimer / 10) % 2) {
-            // Flashing effect when invulnerable
-            this.ctx.fillStyle = '#FF69B4';
         } else {
+            // Normal Papa Sandy appearance
             this.ctx.fillStyle = '#FFD700';
         }
         this.ctx.fillRect(this.papaSandy.x, this.papaSandy.y, this.papaSandy.width, this.papaSandy.height);
