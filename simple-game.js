@@ -134,7 +134,9 @@ A tribute to Papa Sandy's legacy.`
             direction: 1,
             health: 3,
             invulnerable: false,
-            invulnerableTimer: 0
+            invulnerableTimer: 0,
+            animationTimer: 0,
+            animationState: 'idle'
         };
         
         // World-specific enemies and objects
@@ -843,48 +845,61 @@ A tribute to Papa Sandy's legacy.`
         // Check enemy collisions and damage
         for (let enemy of this.enemies) {
             if (!enemy.alive) continue;
-            
-            // Collision detection between Papa Sandy and enemy
-            if (this.papaSandy.x < enemy.x + enemy.width &&
-                this.papaSandy.x + this.papaSandy.width > enemy.x &&
-                this.papaSandy.y < enemy.y + enemy.height &&
-                this.papaSandy.y + this.papaSandy.height > enemy.y) {
-                
-                if (!this.papaSandy.invulnerable) {
-                    // Enemy damages Papa Sandy
-                    this.papaSandy.health--;
-                    this.papaSandy.invulnerable = true;
-                    this.papaSandy.invulnerableTimer = 120; // 2 seconds of invulnerability
-                    
-                    // Knockback Papa Sandy
-                    this.papaSandy.velocityX = this.papaSandy.direction * -3;
-                    this.papaSandy.velocityY = -5;
-                    
-                    // Check if Papa Sandy died
-                    if (this.papaSandy.health <= 0) {
-                        this.gameState = 'GAME_OVER';
-                        this.stopBackgroundMusic();
-                    } else {
-                        this.respawnAtCheckpoint();
-                    }
-                }
-            }
-            
-            // Check if Papa Sandy lands on enemy (stomping)
-            if (this.papaSandy.velocityY > 0 && // Falling
+
+            const overlaps = (
                 this.papaSandy.x < enemy.x + enemy.width &&
                 this.papaSandy.x + this.papaSandy.width > enemy.x &&
-                this.papaSandy.y + this.papaSandy.height > enemy.y &&
-                this.papaSandy.y + this.papaSandy.height < enemy.y + enemy.height + 10) {
-                
-                // Papa Sandy stomped on enemy
+                this.papaSandy.y < enemy.y + enemy.height &&
+                this.papaSandy.y + this.papaSandy.height > enemy.y
+            );
+
+            if (!overlaps) continue;
+
+            // Prioritize stomps before contact damage so jump-attacks feel correct
+            const previousBottom = (this.papaSandy.y - this.papaSandy.velocityY) + this.papaSandy.height;
+            const stompedFromAbove = (
+                this.papaSandy.velocityY > 0 &&
+                previousBottom <= enemy.y + 6
+            );
+
+            if (stompedFromAbove) {
                 enemy.alive = false;
                 this.papaSandy.velocityY = -this.papaSandy.jumpPower * 0.7; // Small bounce
                 this.papaSandy.onGround = false;
                 this.score += 150;
+                continue;
+            }
+
+            if (!this.papaSandy.invulnerable) {
+                // Enemy damages Papa Sandy
+                this.papaSandy.health--;
+                this.papaSandy.invulnerable = true;
+                this.papaSandy.invulnerableTimer = 120; // 2 seconds of invulnerability
+
+                // Knockback Papa Sandy
+                this.papaSandy.velocityX = this.papaSandy.direction * -3;
+                this.papaSandy.velocityY = -5;
+
+                // Check if Papa Sandy died
+                if (this.papaSandy.health <= 0) {
+                    this.gameState = 'GAME_OVER';
+                    this.stopBackgroundMusic();
+                } else {
+                    this.respawnAtCheckpoint();
+                }
             }
         }
         
+        // Update animation state
+        this.papaSandy.animationTimer++;
+        if (!this.papaSandy.onGround) {
+            this.papaSandy.animationState = 'jump';
+        } else if (Math.abs(this.papaSandy.velocityX) > 0.5) {
+            this.papaSandy.animationState = 'run';
+        } else {
+            this.papaSandy.animationState = 'idle';
+        }
+
         // Update invulnerability timer
         if (this.papaSandy.invulnerable) {
             this.papaSandy.invulnerableTimer--;
