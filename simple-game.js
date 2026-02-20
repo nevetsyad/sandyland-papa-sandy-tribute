@@ -14,6 +14,13 @@ class SandylandGame {
         this.gameState = 'SPLASH'; // SPLASH, PLAYING, PAUSED, GAME_OVER
         this.menuState = 'CLOSED'; // CLOSED, PAUSED, MAIN
         
+        // Background music system
+        this.audioContext = null;
+        this.backgroundMusic = null;
+        this.musicVolume = 0.1; // Soft background volume
+        this.musicMuted = false;
+        this.currentMusicTrack = 0;
+        
         // Story system
         this.storyMode = 'INTRO'; // INTRO, WORLD_1, WORLD_2, WORLD_3, VICTORY
         this.storyText = '';
@@ -141,7 +148,105 @@ A tribute to Papa Sandy's legacy.`
         this.levelCompletionThreshold = 2; // Need to collect 2 stars
         
         this.setupEventListeners();
+        this.initializeAudio();
         this.gameLoop();
+    }
+    
+    // Background Music System
+    initializeAudio() {
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.initializeBackgroundMusic();
+        } catch (error) {
+            console.warn('Audio context initialization failed:', error);
+        }
+    }
+    
+    initializeBackgroundMusic() {
+        if (!this.audioContext) return;
+        
+        // Create country-style background music
+        this.createCountryMusicLoop();
+    }
+    
+    createCountryMusicLoop() {
+        if (!this.audioContext || this.musicMuted) return;
+        
+        // Create a simple country-style melody using Web Audio API
+        const notes = [196, 196, 220, 196, 262, 220]; // G3, G3, A3, G3, C4, A3
+        const durations = [0.4, 0.4, 0.8, 0.4, 0.8, 0.8]; // Quarter, quarter, half, quarter, half, half
+        
+        let currentTime = this.audioContext.currentTime;
+        
+        notes.forEach((note, index) => {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            // Create warm acoustic guitar-like tone
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(note, currentTime);
+            
+            // Add gentle volume envelope for acoustic feel
+            gainNode.gain.setValueAtTime(0, currentTime);
+            gainNode.gain.linearRampToValueAtTime(this.musicVolume * 0.3, currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(this.musicVolume * 0.2, currentTime + 0.1);
+            gainNode.gain.linearRampToValueAtTime(0, currentTime + durations[index]);
+            
+            // Add subtle low-pass filter for acoustic guitar effect
+            const filter = this.audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1000, currentTime);
+            filter.Q.setValueAtTime(10, currentTime);
+            
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            oscillator.start(currentTime);
+            oscillator.stop(currentTime + durations[index]);
+            
+            currentTime += durations[index];
+        });
+        
+        // Loop the music every 4 seconds
+        setTimeout(() => {
+            if (this.gameState === 'PLAYING' && !this.musicMuted) {
+                this.createCountryMusicLoop();
+            }
+        }, 4000);
+    }
+    
+    toggleMute() {
+        this.musicMuted = !this.musicMuted;
+        if (this.musicMuted) {
+            // Stop current music
+            if (this.backgroundMusic) {
+                this.backgroundMusic.stop();
+                this.backgroundMusic = null;
+            }
+        } else {
+            // Resume music
+            this.createCountryMusicLoop();
+        }
+        return this.musicMuted;
+    }
+    
+    setMusicVolume(volume) {
+        this.musicVolume = Math.max(0, Math.min(1, volume));
+        // Volume changes will take effect on next music loop
+    }
+    
+    stopBackgroundMusic() {
+        if (this.backgroundMusic) {
+            this.backgroundMusic.stop();
+            this.backgroundMusic = null;
+        }
+    }
+    
+    playBackgroundMusic() {
+        if (!this.musicMuted && this.gameState === 'PLAYING') {
+            this.createCountryMusicLoop();
+        }
     }
     
     initializeWorld(worldNumber) {
@@ -1145,6 +1250,7 @@ A tribute to Papa Sandy's legacy.`
     startGame() {
         this.gameState = 'PLAYING';
         this.storyMode = 'WORLD_1';
+        this.playBackgroundMusic();
         this.initializeWorld(1);
     }
     
