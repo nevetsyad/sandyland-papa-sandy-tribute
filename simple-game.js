@@ -1933,6 +1933,8 @@ A tribute to Papa Sandy's legacy.`
     
     updateStory() {
         if (this.gameState !== 'SPLASH') return;
+
+        this.storyTimer += 1;
         
         const anyKeyPressed = this.keys['Space'] || this.keys['Enter'] || this.keys['Escape'] ||
             Object.values(this.keys).some(key => key === true);
@@ -1949,19 +1951,6 @@ A tribute to Papa Sandy's legacy.`
         if (anyKeyPressed) {
             this.handleStorySkip();
             return;
-        }
-        
-        // Auto-scroll story
-        if (this.storyAutoScroll && this.storyScrollY < this.storyMaxScroll) {
-            this.storyScrollY += this.storySpeed;
-            if (this.storyScrollY >= this.storyMaxScroll) {
-                this.storyScrollY = this.storyMaxScroll;
-                this.storyAutoScroll = false;
-                if (this.storyMode === 'INTRO') {
-                    this.startStory('LEGEND');
-                    return;
-                }
-            }
         }
     }
     
@@ -1999,33 +1988,90 @@ A tribute to Papa Sandy's legacy.`
             return;
         }
         
-        // Draw cinematic scrolling story text
+        // Draw static story text panel
+        this.ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        this.ctx.fillRect(38, 96, this.canvas.width - 76, this.canvas.height - 200);
+
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = '24px Courier New';
         this.ctx.textAlign = 'left';
-        
+
         const storyLines = this.stories[this.storyMode].split('\n');
         const lineHeight = 30;
-        // Start with the first line already visible, then scroll upward immediately.
-        const startY = 170;
+        const startY = 145;
 
         for (let i = 0; i < storyLines.length; i++) {
-            const lineY = startY + (i * lineHeight) - this.storyScrollY;
-            if (lineY > 60 && lineY < this.canvas.height - 40) {
-                this.ctx.fillText(storyLines[i], 50, lineY);
+            const lineY = startY + (i * lineHeight);
+            if (lineY > 80 && lineY < this.canvas.height - 120) {
+                this.ctx.fillText(storyLines[i], 56, lineY);
             }
         }
-        
-        // Draw progress indicator
-        if (this.storyMaxScroll > 0) {
-            const progress = this.storyScrollY / this.storyMaxScroll;
-            this.ctx.fillStyle = '#FFD700';
-            this.ctx.fillRect(50, this.canvas.height - 30, (this.canvas.width - 100) * progress, 4);
-            this.ctx.strokeStyle = '#FFFFFF';
-            this.ctx.strokeRect(50, this.canvas.height - 30, this.canvas.width - 100, 4);
+
+        // Decorative spinning Corvette + tire smoke below text
+        this.drawSpinningCorvette(this.canvas.width / 2, this.canvas.height - 62);
+
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.font = 'bold 18px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Press SPACE / ENTER / TAP to continue', this.canvas.width / 2, this.canvas.height - 18);
+    }
+
+    drawSpinningCorvette(cx, y) {
+        const t = this.storyTimer || 0;
+        const wheelSpin = t * 0.35;
+        const bob = Math.sin(t * 0.08) * 2;
+
+        const carX = cx - 70;
+        const carY = y + bob - 26;
+
+        // Body
+        this.ctx.fillStyle = '#F8F8F8';
+        this.ctx.fillRect(carX + 10, carY + 12, 120, 22);
+        this.ctx.fillRect(carX + 36, carY, 58, 14);
+
+        // Window
+        this.ctx.fillStyle = '#BFD7EA';
+        this.ctx.fillRect(carX + 48, carY + 2, 34, 10);
+
+        // Wheels
+        const wheelY = carY + 36;
+        const wheel1X = carX + 34;
+        const wheel2X = carX + 106;
+
+        [wheel1X, wheel2X].forEach((wx) => {
+            this.ctx.beginPath();
+            this.ctx.fillStyle = '#111';
+            this.ctx.arc(wx, wheelY, 12, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            this.ctx.beginPath();
+            this.ctx.fillStyle = '#9EA4AA';
+            this.ctx.arc(wx, wheelY, 6, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // spinning spokes
+            this.ctx.strokeStyle = '#E6EBEF';
+            this.ctx.lineWidth = 1.5;
+            for (let i = 0; i < 4; i++) {
+                const a = wheelSpin + (i * Math.PI / 2);
+                this.ctx.beginPath();
+                this.ctx.moveTo(wx, wheelY);
+                this.ctx.lineTo(wx + Math.cos(a) * 5, wheelY + Math.sin(a) * 5);
+                this.ctx.stroke();
+            }
+        });
+
+        // Tire smoke puffs
+        const puffBaseX = carX + 132;
+        for (let i = 0; i < 4; i++) {
+            const px = puffBaseX + i * 11 + Math.sin((t + i * 7) * 0.11) * 2;
+            const py = wheelY - 5 - i * 5 - ((t * 0.3 + i * 5) % 12);
+            const r = 4 + i * 1.3;
+            this.ctx.beginPath();
+            this.ctx.fillStyle = `rgba(210,210,210,${0.25 - i * 0.05})`;
+            this.ctx.arc(px, py, r, 0, Math.PI * 2);
+            this.ctx.fill();
         }
-        
-        // Skip still works via key/tap, but we intentionally omit on-screen skip text to keep intro clean.
     }
 
     drawLegendScreen() {
