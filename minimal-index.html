@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandyland - Minimal Working Version</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 50%, #F0E68C 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #gameContainer {
+            background: #000;
+            border: 4px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+        }
+        
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        #gameInfo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 16px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid rgba(255,215,0,0.5);
+        }
+        
+        #gameInfo div {
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        
+        #gameInfo div:nth-child(1) { color: #FFD700; font-size: 18px; }
+        #gameInfo div:nth-child(2) { color: #FFFFFF; font-size: 14px; }
+        #gameInfo div:nth-child(3) { color: #FF69B4; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div id="gameInfo">
+        <div>SANDYLAND - TESTING...</div>
+        <div>Please wait while the game loads...</div>
+    </div>
+    
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    
+    <!-- Load minimal game -->
+    <script>
+        // Minimal SandylandGame class
+        class SandylandGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.ctx.imageSmoothingEnabled = false;
+                
+                // Game state
+                this.gameState = 'PLAYING';
+                this.keys = {};
+                this.gravity = 0.8;
+                this.groundY = 500;
+                
+                // Player properties
+                this.player = {
+                    x: 100,
+                    y: this.groundY - 50,
+                    width: 40,
+                    height: 50,
+                    velocityX: 0,
+                    velocityY: 0,
+                    onGround: false,
+                    color: '#FFD700'
+                };
+                
+                // Game objects
+                this.powerUps = [
+                    { x: 300, y: this.groundY - 30, width: 20, height: 20, type: 'star', collected: false },
+                    { x: 500, y: this.groundY - 30, width: 20, height: 20, type: 'heart', collected: false }
+                ];
+                
+                this.setupEventListeners();
+                this.gameLoop();
+            }
+            
+            setupEventListeners() {
+                window.addEventListener('keydown', (e) => {
+                    this.keys[e.code] = true;
+                });
+                
+                window.addEventListener('keyup', (e) => {
+                    this.keys[e.code] = false;
+                });
+            }
+            
+            update() {
+                // Player movement
+                if (this.keys['ArrowLeft']) {
+                    this.player.velocityX = -5;
+                } else if (this.keys['ArrowRight']) {
+                    this.player.velocityX = 5;
+                } else {
+                    this.player.velocityX *= 0.8; // Friction
+                }
+                
+                // Jumping
+                if (this.keys['Space'] && this.player.onGround) {
+                    this.player.velocityY = -15;
+                    this.player.onGround = false;
+                }
+                
+                // Apply gravity
+                this.player.velocityY += this.gravity;
+                
+                // Update position
+                this.player.x += this.player.velocityX;
+                this.player.y += this.player.velocityY;
+                
+                // Ground collision
+                if (this.player.y > this.groundY - this.player.height) {
+                    this.player.y = this.groundY - this.player.height;
+                    this.player.velocityY = 0;
+                    this.player.onGround = true;
+                }
+                
+                // Screen boundaries
+                if (this.player.x < 0) this.player.x = 0;
+                if (this.player.x > this.canvas.width - this.player.width) {
+                    this.player.x = this.canvas.width - this.player.width;
+                }
+                
+                // Power-up collection
+                this.powerUps.forEach(powerUp => {
+                    if (!powerUp.collected && this.checkCollision(this.player, powerUp)) {
+                        powerUp.collected = true;
+                    }
+                });
+            }
+            
+            checkCollision(rect1, rect2) {
+                return rect1.x < rect2.x + rect2.width &&
+                       rect1.x + rect1.width > rect2.x &&
+                       rect1.y < rect2.y + rect2.height &&
+                       rect1.y + rect1.height > rect2.y;
+            }
+            
+            render() {
+                // Clear canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw background
+                this.ctx.fillStyle = '#87CEEB';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw ground
+                this.ctx.fillStyle = '#8B4513';
+                this.ctx.fillRect(0, this.groundY, this.canvas.width, this.canvas.height - this.groundY);
+                
+                // Draw player
+                this.ctx.fillStyle = this.player.color;
+                this.ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+                
+                // Draw power-ups
+                this.powerUps.forEach(powerUp => {
+                    if (!powerUp.collected) {
+                        this.ctx.fillStyle = powerUp.type === 'star' ? '#FFD700' : '#FF69B4';
+                        this.ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
+                    }
+                });
+                
+                // Draw UI
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = '20px Courier New';
+                this.ctx.fillText('SANDYLAND - RUNNING!', 10, 30);
+                this.ctx.font = '14px Courier New';
+                this.ctx.fillText('Arrow Keys: Move | Space: Jump', 10, 50);
+            }
+            
+            gameLoop() {
+                this.update();
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+        
+        // Initialize game when page loads
+        window.addEventListener('load', () => {
+            const info = document.getElementById('gameInfo');
+            
+            try {
+                // Create game instance
+                const game = new SandylandGame();
+                
+                // Update info to show game is working
+                info.innerHTML = `
+                    <div>✅ SANDYLAND - GAME STARTED!</div>
+                    <div>Use ARROW KEYS to move, SPACEBAR to jump</div>
+                    <div>Collect the golden stars and pink hearts!</div>
+                `;
+                
+                console.log('Sandyland minimal game started successfully!');
+            } catch (error) {
+                console.error('Game initialization error:', error);
+                info.innerHTML = `
+                    <div style="color: red;">❌ GAME ERROR</div>
+                    <div>${error.message}</div>
+                    <div>Please refresh the page to try again.</div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandyland Test</title>
+</head>
+<body>
+    <h1>Sandyland Test</h1>
+    <div id="test-results"></div>
+    
+    <!-- Load scripts in order -->
+    <script src="performance-monitor.js"></script>
+    <script src="game.js"></script>
+    
+    <script>
+        document.getElementById('test-results').innerHTML += '<div>Loading scripts...</div>';
+        
+        window.addEventListener('load', () => {
+            document.getElementById('test-results').innerHTML += '<div>Window loaded</div>';
+            
+            // Test 1: Check if SandylandGame exists
+            if (typeof SandylandGame !== 'undefined') {
+                document.getElementById('test-results').innerHTML += '<div style="color: green;">✅ SandylandGame class found</div>';
+            } else {
+                document.getElementById('test-results').innerHTML += '<div style="color: red;">❌ SandylandGame class NOT found</div>';
+            }
+            
+            // Test 2: Check if SandylandPerformanceMonitor exists
+            if (typeof SandylandPerformanceMonitor !== 'undefined') {
+                document.getElementById('test-results').innerHTML += '<div style="color: green;">✅ SandylandPerformanceMonitor class found</div>';
+            } else {
+                document.getElementById('test-results').innerHTML += '<div style="color: red;">❌ SandylandPerformanceMonitor class NOT found</div>';
+            }
+            
+            // Test 3: Try to create game instance
+            try {
+                const game = new SandylandGame();
+                document.getElementById('test-results').innerHTML += '<div style="color: green;">✅ SandylandGame instance created successfully</div>';
+                
+                // Check game properties
+                if (game.canvas && game.ctx) {
+                    document.getElementById('test-results').innerHTML += '<div style="color: green;">✅ Game canvas and context initialized</div>';
+                } else {
+                    document.getElementById('test-results').innerHTML += '<div style="color: red;">❌ Game canvas or context missing</div>';
+                }
+                
+            } catch (error) {
+                document.getElementById('test-results').innerHTML += `<div style="color: red;">❌ Error creating SandylandGame: ${error.message}</div>`;
+                console.error('Game creation error:', error);
+            }
+            
+            // Test 4: Check for console errors
+            document.getElementById('test-results').innerHTML += '<div><strong>Check browser console for errors</strong></div>';
+        });
+        
+        // Log any errors that occur
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+            document.getElementById('test-results').innerHTML += `<div style="color: red;">❌ Global error: ${event.error.message}</div>`;
+        });
+    </script>
+</body>
+</html>
