@@ -2000,13 +2000,13 @@ A tribute to Papa Sandy's legacy.`
         
         // Draw cinematic scrolling story text
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = '20px Courier New';
+        this.ctx.font = '24px Courier New';
         this.ctx.textAlign = 'left';
         
         const storyLines = this.stories[this.storyMode].split('\n');
-        const lineHeight = 25;
-        // Keep story text visible immediately under the title, then scroll upward continuously.
-        const startY = 120;
+        const lineHeight = 30;
+        // Start a little lower on screen, then scroll upward continuously.
+        const startY = 160;
 
         for (let i = 0; i < storyLines.length; i++) {
             const lineY = startY + (i * lineHeight) - this.storyScrollY;
