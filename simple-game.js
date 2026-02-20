@@ -1456,8 +1456,8 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.lineWidth = 3;
         this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
         const controlsText = this.reducedEffects
-            ? 'Controls: Arrows/A,D Move | Space/W Jump | E Action/Interact | B Push | T Throw | M Music | [/] Vol | V FX ON/OFF'
-            : 'Controls: Arrows/A,D Move | Space/W Jump | E Action/Interact | B Push | T Throw | ESC Pause | M Music | [/] Vol | V FX LOW';
+            ? 'Controls: Arrows/A,D Move | Space/W Jump | E Action/Interact | M Music | [/] Vol | V FX ON/OFF'
+            : 'Controls: Arrows/A,D Move | Space/W Jump | E Action/Interact | ESC Pause | M Music | [/] Vol | V FX LOW';
         this.ctx.strokeText(controlsText, 12, this.canvas.height - 14);
         this.ctx.fillStyle = '#E0E0E0';
         this.ctx.fillText(controlsText, 12, this.canvas.height - 14);
@@ -2370,7 +2370,7 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.arc(82, 214, 10, 0, Math.PI * 2);
         this.ctx.stroke();
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillText('Tire: push (B), throw (T), quick action (E)', 100, 220);
+        this.ctx.fillText('Tire: E to push or throw (auto-picks best)', 100, 220);
 
         // Enemy strip: crab body/claws + minion aura block + coconut sphere
         this.ctx.fillStyle = '#FF6347'; // crab body
