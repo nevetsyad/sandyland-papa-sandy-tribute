@@ -1973,7 +1973,6 @@ class SandylandGame {
             case 'GAME_OVER':
                 this.drawGameOverScreen();
                 break;
-            }
         }
         
         this.ctx.restore();
