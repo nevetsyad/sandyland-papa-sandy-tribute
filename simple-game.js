@@ -26,7 +26,7 @@ class SandylandGame {
         this.storyMode = 'LEGEND'; // INTRO, LEGEND, WORLD_1, WORLD_2, WORLD_3, VICTORY
         this.storyText = '';
         this.storyTimer = 0;
-        this.storySpeed = 2;
+        this.storySpeed = 1;
         this.storyScrollY = 0;
         this.storyMaxScroll = 0;
         this.storyAutoScroll = true;
