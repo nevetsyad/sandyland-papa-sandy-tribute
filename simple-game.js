@@ -1338,7 +1338,10 @@ A tribute to Papa Sandy's legacy.`
         
         // Calculate max scroll distance
         const lines = this.stories[this.storyMode].split('\n');
-        this.storyMaxScroll = Math.max(0, (lines.length * 25) - (this.canvas.height - 100));
+        const lineHeight = 25;
+        const textHeight = lines.length * lineHeight;
+        // Full-screen cinematic scroll: start below the viewport and scroll past the top
+        this.storyMaxScroll = textHeight + this.canvas.height;
     }
     
     updateStory() {
@@ -1388,23 +1391,18 @@ A tribute to Papa Sandy's legacy.`
         
         this.ctx.fillText(titleText, this.canvas.width / 2, 60);
         
-        // Draw scrolling story text
+        // Draw cinematic scrolling story text
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = '20px Courier New';
         this.ctx.textAlign = 'left';
         
         const storyLines = this.stories[this.storyMode].split('\n');
         const lineHeight = 25;
-        const startY = 120;
-        const maxLines = Math.floor((this.canvas.height - 140) / lineHeight);
+        const startY = this.canvas.height + 20;
         
-        // Calculate which lines to show
-        const startLine = Math.floor(this.storyScrollY / lineHeight);
-        const endLine = Math.min(startLine + maxLines + 1, storyLines.length);
-        
-        for (let i = startLine; i < endLine; i++) {
-            const lineY = startY + ((i - startLine) * lineHeight) - (this.storyScrollY % lineHeight);
-            if (lineY > 50 && lineY < this.canvas.height - 50) {
+        for (let i = 0; i < storyLines.length; i++) {
+            const lineY = startY + (i * lineHeight) - this.storyScrollY;
+            if (lineY > 60 && lineY < this.canvas.height - 40) {
                 this.ctx.fillText(storyLines[i], 50, lineY);
             }
         }
@@ -1418,11 +1416,7 @@ A tribute to Papa Sandy's legacy.`
             this.ctx.strokeRect(50, this.canvas.height - 30, this.canvas.width - 100, 4);
         }
         
-        // Draw skip prompt
-        this.ctx.fillStyle = '#CCCCCC';
-        this.ctx.font = '16px Courier New';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('Press any key to skip...', this.canvas.width / 2, this.canvas.height - 50);
+        // Skip still works via key/tap, but we intentionally omit on-screen skip text to keep intro clean.
     }
     
     handleStorySkip() {
