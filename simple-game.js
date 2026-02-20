@@ -1993,17 +1993,41 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.fillRect(38, 96, this.canvas.width - 76, this.canvas.height - 200);
 
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = '18px Courier New';
+        this.ctx.font = '16px Courier New';
         this.ctx.textAlign = 'left';
 
-        const storyLines = this.stories[this.storyMode].split('\n');
-        const lineHeight = 24;
-        const startY = 145;
+        const baseLines = this.stories[this.storyMode].split('\n');
+        const lineHeight = 22;
+        const startY = 132;
+        const textX = 56;
+        const maxWidth = this.canvas.width - 112;
+
+        // Word-wrap so long lines don't run off the screen
+        const storyLines = [];
+        for (const rawLine of baseLines) {
+            if (!rawLine.trim()) {
+                storyLines.push('');
+                continue;
+            }
+
+            const words = rawLine.split(' ');
+            let current = '';
+            for (const word of words) {
+                const candidate = current ? `${current} ${word}` : word;
+                if (this.ctx.measureText(candidate).width <= maxWidth) {
+                    current = candidate;
+                } else {
+                    if (current) storyLines.push(current);
+                    current = word;
+                }
+            }
+            if (current) storyLines.push(current);
+        }
 
         for (let i = 0; i < storyLines.length; i++) {
             const lineY = startY + (i * lineHeight);
             if (lineY > 80 && lineY < this.canvas.height - 120) {
-                this.ctx.fillText(storyLines[i], 56, lineY);
+                this.ctx.fillText(storyLines[i], textX, lineY);
             }
         }
 
