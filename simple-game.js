@@ -1505,7 +1505,6 @@ A tribute to Papa Sandy's legacy.`
         this.initializeWorld(this.currentWorld);
         this.bossBattle = null;
         this.resetPlayerForWorldStart();
-        this.showWorldIntro();
     }
     
     // Add method to initialize tires for each world
@@ -2109,9 +2108,6 @@ A tribute to Papa Sandy's legacy.`
     }
 
     startGame() {
-        this.gameState = 'PLAYING';
-        this.storyMode = 'WORLD_1';
-        this.playBackgroundMusic();
         this.currentWorld = 1;
         this.score = 0;
         this.levelCompleted = false;
@@ -2119,6 +2115,9 @@ A tribute to Papa Sandy's legacy.`
         this.initializeWorld(1);
         this.bossBattle = null;
         this.resetPlayerForWorldStart();
+
+        // Show world-intro scroll at the very beginning (World 1), then start gameplay.
+        this.startStory('WORLD_1');
     }
     
     showWorldIntro() {
