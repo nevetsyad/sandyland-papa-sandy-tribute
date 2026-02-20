@@ -221,17 +221,32 @@ A tribute to Papa Sandy's legacy.`
     
     toggleMute() {
         this.musicMuted = !this.musicMuted;
-        if (this.musicMuted) {
-            // Stop current music
-            if (this.backgroundMusic) {
-                this.backgroundMusic.stop();
-                this.backgroundMusic = null;
-            }
-        } else {
-            // Resume music
+        if (!this.musicMuted && this.gameState === 'PLAYING') {
             this.createCountryMusicLoop();
         }
         return this.musicMuted;
+    }
+
+    cycleMusicMode() {
+        if (this.musicMuted) {
+            this.musicMuted = false;
+            this.setMusicVolume(0.1);
+        } else if (this.musicVolume > 0.075) {
+            this.setMusicVolume(0.04); // low
+        } else {
+            this.musicMuted = true;
+        }
+
+        if (!this.musicMuted && this.gameState === 'PLAYING') {
+            this.createCountryMusicLoop();
+        }
+
+        return this.getMusicLabel();
+    }
+
+    getMusicLabel() {
+        if (this.musicMuted) return 'MUSIC: OFF';
+        return this.musicVolume > 0.075 ? 'MUSIC: ON' : 'MUSIC: LOW';
     }
     
     setMusicVolume(volume) {
@@ -493,6 +508,19 @@ A tribute to Papa Sandy's legacy.`
             if (e.code === 'KeyV') {
                 this.toggleReducedEffects();
             }
+
+            // Sound controls
+            if (e.code === 'KeyM') {
+                this.toggleMute();
+            }
+            if (e.code === 'BracketLeft') {
+                this.setMusicVolume(this.musicVolume - 0.02);
+                this.musicMuted = false;
+            }
+            if (e.code === 'BracketRight') {
+                this.setMusicVolume(this.musicVolume + 0.02);
+                this.musicMuted = false;
+            }
             
             // Handle tire actions
             if (e.code === 'KeyB' && this.gameState === 'PLAYING') {
@@ -577,6 +605,7 @@ A tribute to Papa Sandy's legacy.`
         const restartBtn = createButton('PLAY AGAIN', '#1565c0', '118px');
         const mainMenuBtn = createButton('MAIN MENU', '#424242', '118px');
         const fxBtn = createButton('FX: ON', '#455a64', '92px');
+        const musicBtn = createButton(this.getMusicLabel(), '#00695c', '118px');
 
         const setKey = (code, value) => {
             this.keys[code] = value;
@@ -654,6 +683,13 @@ A tribute to Papa Sandy's legacy.`
         fxBtn.addEventListener('touchstart', toggleFxAction);
         fxBtn.addEventListener('mousedown', toggleFxAction);
 
+        const toggleMusicAction = (e) => {
+            if (e) e.preventDefault();
+            musicBtn.textContent = this.cycleMusicMode();
+        };
+        musicBtn.addEventListener('touchstart', toggleMusicAction);
+        musicBtn.addEventListener('mousedown', toggleMusicAction);
+
         controlPanel.appendChild(leftBtn);
         controlPanel.appendChild(jumpBtn);
         controlPanel.appendChild(tireBtn);
@@ -665,6 +701,7 @@ A tribute to Papa Sandy's legacy.`
         actionPanel.appendChild(restartBtn);
         actionPanel.appendChild(mainMenuBtn);
         actionPanel.appendChild(fxBtn);
+        actionPanel.appendChild(musicBtn);
 
         document.body.appendChild(controlPanel);
         document.body.appendChild(actionPanel);
@@ -681,7 +718,8 @@ A tribute to Papa Sandy's legacy.`
             resume: resumeBtn,
             restart: restartBtn,
             mainMenu: mainMenuBtn,
-            fx: fxBtn
+            fx: fxBtn,
+            music: musicBtn
         };
 
         this.updateMobileControlsVisibility();
@@ -1082,8 +1120,8 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.lineWidth = 3;
         this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
         const controlsText = this.reducedEffects
-            ? 'Controls: Arrows/A,D Move | Space/W Jump | B Push | T Throw | V FX ON/OFF'
-            : 'Controls: Arrows/A,D Move | Space/W Jump | B Push | T Throw | ESC Pause | V FX LOW';
+            ? 'Controls: Arrows/A,D Move | Space/W Jump | B Push | T Throw | M Music | [/] Vol | V FX ON/OFF'
+            : 'Controls: Arrows/A,D Move | Space/W Jump | B Push | T Throw | ESC Pause | M Music | [/] Vol | V FX LOW';
         this.ctx.strokeText(controlsText, 12, this.canvas.height - 14);
         this.ctx.fillStyle = '#E0E0E0';
         this.ctx.fillText(controlsText, 12, this.canvas.height - 14);
@@ -1333,6 +1371,8 @@ A tribute to Papa Sandy's legacy.`
         this.mobileControls.restart.style.display = (isPaused || isTerminal) ? 'block' : 'none';
         this.mobileControls.mainMenu.style.display = (isPaused || isTerminal) ? 'block' : 'none';
         this.mobileControls.fx.style.display = (this.gameState !== 'SPLASH') ? 'block' : 'none';
+        this.mobileControls.music.style.display = (this.gameState !== 'SPLASH') ? 'block' : 'none';
+        this.mobileControls.music.textContent = this.getMusicLabel();
     }
 
     toggleMenu() {
