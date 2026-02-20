@@ -23,7 +23,7 @@ class SandylandGame {
         this.currentMusicTrack = 0;
         
         // Story system
-        this.storyMode = 'LEGEND'; // INTRO, LEGEND, WORLD_1, WORLD_2, WORLD_3, VICTORY
+        this.storyMode = 'INTRO'; // INTRO, LEGEND, WORLD_1, WORLD_2, WORLD_3, VICTORY
         this.storyText = '';
         this.storyTimer = 0;
         this.storySpeed = 0.62;
@@ -2157,8 +2157,9 @@ A tribute to Papa Sandy's legacy.`
         this.winCelebrationStart = 0;
         this.resetPlayerForWorldStart();
 
-        // Show world-intro scroll at the very beginning (World 1), then start gameplay.
-        this.startStory('WORLD_1');
+        // Start gameplay immediately after intro + legend flow.
+        this.gameState = 'PLAYING';
+        this.playBackgroundMusic();
     }
     
     showWorldIntro() {
