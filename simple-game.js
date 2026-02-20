@@ -1089,7 +1089,10 @@ A tribute to Papa Sandy's legacy.`
         const spriteWidth = sprite[0].length * pixelSize;
         const spriteHeight = sprite.length * pixelSize;
         const drawX = Math.floor((this.papaSandy.width - spriteWidth) / 2);
-        const drawY = this.papaSandy.y + (this.papaSandy.height - spriteHeight);
+        const idleBob = this.papaSandy.animationState === 'idle'
+            ? Math.floor(this.papaSandy.animationTimer / 30) % 2
+            : 0;
+        const drawY = this.papaSandy.y + (this.papaSandy.height - spriteHeight) + idleBob;
 
         this.ctx.save();
         this.ctx.translate(this.papaSandy.x, 0);
