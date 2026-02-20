@@ -1993,11 +1993,11 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.fillRect(38, 96, this.canvas.width - 76, this.canvas.height - 200);
 
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = '24px Courier New';
+        this.ctx.font = '20px Courier New';
         this.ctx.textAlign = 'left';
 
         const storyLines = this.stories[this.storyMode].split('\n');
-        const lineHeight = 30;
+        const lineHeight = 26;
         const startY = 145;
 
         for (let i = 0; i < storyLines.length; i++) {
@@ -2018,7 +2018,7 @@ A tribute to Papa Sandy's legacy.`
 
     drawSpinningCorvette(cx, y) {
         const t = this.storyTimer || 0;
-        const wheelSpin = t * 0.35;
+        const wheelSpin = -t * 0.35;
         const bob = Math.sin(t * 0.08) * 2;
 
         const carX = cx - 70;
