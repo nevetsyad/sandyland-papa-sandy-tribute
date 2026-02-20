@@ -173,6 +173,7 @@ A tribute to Papa Sandy's legacy.`
         // Finale boss phase
         this.bossBattle = null;
         this.bossObjectiveText = 'BOSS: Defeat Dr.vette! STOMP or hit with pushed/thrown tires.';
+        this.winCelebrationStart = 0;
         
         this.setupEventListeners();
         this.initializeAudio();
@@ -1451,12 +1452,14 @@ A tribute to Papa Sandy's legacy.`
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-            // Celebration confetti animation
             const t = Date.now() / 1000;
+            const elapsed = this.winCelebrationStart ? (Date.now() - this.winCelebrationStart) : 0;
+
+            // Celebration confetti + star burst
             const confettiColors = ['#FFD700', '#FF6F61', '#4DD0E1', '#81C784', '#BA68C8'];
-            for (let i = 0; i < 36; i++) {
-                const x = (i * 47 + (t * 90)) % (this.canvas.width + 40) - 20;
-                const y = ((i * 83 + (t * 140)) % (this.canvas.height + 60)) - 30;
+            for (let i = 0; i < 48; i++) {
+                const x = (i * 47 + (t * 95)) % (this.canvas.width + 40) - 20;
+                const y = ((i * 83 + (t * 150)) % (this.canvas.height + 60)) - 30;
                 const w = 6 + (i % 4);
                 const h = 10 + (i % 3);
                 const angle = (t * 4 + i) % (Math.PI * 2);
@@ -1468,15 +1471,41 @@ A tribute to Papa Sandy's legacy.`
                 this.ctx.restore();
             }
 
+            for (let i = 0; i < 10; i++) {
+                const sx = 80 + i * 75 + Math.sin(t + i) * 8;
+                const sy = 90 + Math.cos(t * 1.5 + i) * 10;
+                this.ctx.fillStyle = '#FFE082';
+                this.ctx.fillText('★', sx, sy);
+            }
+
+            // Show Corvette prominently on victory
+            const carX = this.canvas.width / 2 - 90;
+            const carY = this.canvas.height / 2 + 20;
+            this.ctx.fillStyle = '#FDFDFD';
+            this.ctx.fillRect(carX, carY + 16, 180, 30);
+            this.ctx.fillRect(carX + 40, carY, 80, 20);
+            this.ctx.fillStyle = '#B0C4DE';
+            this.ctx.fillRect(carX + 48, carY + 4, 64, 13);
+            this.ctx.fillStyle = '#1E1E1E';
+            this.ctx.fillRect(carX + 26, carY + 38, 28, 20);
+            this.ctx.fillRect(carX + 126, carY + 38, 28, 20);
+
             this.ctx.fillStyle = '#FFD700';
-            this.ctx.font = '34px Courier New';
+            this.ctx.font = 'bold 44px Courier New';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('VICTORY!', this.canvas.width / 2, this.canvas.height / 2 - 20);
+            this.ctx.fillText('VICTORY!', this.canvas.width / 2, this.canvas.height / 2 - 40);
             this.ctx.fillStyle = '#FFFFFF';
-            this.ctx.font = '18px Courier New';
-            this.ctx.fillText('Papa Sandy rescued his Corvette!', this.canvas.width / 2, this.canvas.height / 2 + 12);
+            this.ctx.font = '20px Courier New';
+            this.ctx.fillText('Papa Sandy rescued his Corvette!', this.canvas.width / 2, this.canvas.height / 2 - 8);
+
             this.ctx.font = '16px Courier New';
-            this.ctx.fillText('Press R / ENTER / SPACE or tap PLAY AGAIN', this.canvas.width / 2, this.canvas.height / 2 + 46);
+            if (elapsed < 3000) {
+                this.ctx.fillStyle = '#CFE8FF';
+                this.ctx.fillText('Celebrating...', this.canvas.width / 2, this.canvas.height / 2 + 78);
+            } else {
+                this.ctx.fillStyle = '#FFFFFF';
+                this.ctx.fillText('Press R / ENTER / SPACE or tap PLAY AGAIN', this.canvas.width / 2, this.canvas.height / 2 + 78);
+            }
         }
     }
     
@@ -1652,6 +1681,7 @@ A tribute to Papa Sandy's legacy.`
         this.keys = {};
         this.papaSandy.health = 3;
         this.initializeWorld(this.currentWorld);
+        this.winCelebrationStart = 0;
         this.resetPlayerForWorldStart();
         this.playBackgroundMusic();
         this.updateMobileControlsVisibility();
@@ -1664,6 +1694,7 @@ A tribute to Papa Sandy's legacy.`
         this.currentWorld = 1;
         this.levelCompleted = false;
         this.papaSandy.health = 3;
+        this.winCelebrationStart = 0;
         this.startStory('INTRO');
         this.updateMobileControlsVisibility();
     }
@@ -1823,6 +1854,7 @@ A tribute to Papa Sandy's legacy.`
         if (boss.health <= 0) {
             boss.active = false;
             this.gameState = 'WIN';
+            this.winCelebrationStart = Date.now();
             this.stopBackgroundMusic();
         }
     }
@@ -1850,6 +1882,7 @@ A tribute to Papa Sandy's legacy.`
             if (boss.health <= 0) {
                 boss.active = false;
                 this.gameState = 'WIN';
+                this.winCelebrationStart = Date.now();
                 this.stopBackgroundMusic();
             }
             return;
@@ -1887,7 +1920,7 @@ A tribute to Papa Sandy's legacy.`
         if (!boss || !boss.active) return;
 
         // Dr.vette: vet/lab-coat silhouette, ~2x Papa Sandy height
-        this.ctx.fillStyle = '#2B1B0F'; // hair
+        this.ctx.fillStyle = '#9AA0A6'; // grey hair
         this.ctx.fillRect(boss.x + 16, boss.y + 2, 32, 20);
         this.ctx.fillStyle = '#EBC9A8'; // face
         this.ctx.fillRect(boss.x + 20, boss.y + 12, 24, 18);
@@ -2114,6 +2147,7 @@ A tribute to Papa Sandy's legacy.`
         this.papaSandy.health = 3;
         this.initializeWorld(1);
         this.bossBattle = null;
+        this.winCelebrationStart = 0;
         this.resetPlayerForWorldStart();
 
         // Show world-intro scroll at the very beginning (World 1), then start gameplay.
