@@ -74,10 +74,20 @@ vm.runInContext(`${code}\nthis.SandylandGame = SandylandGame;`, sandbox);
 const game = new sandbox.SandylandGame();
 
 assert.equal(game.gameState, 'SPLASH', 'Game should start in splash mode');
+assert.equal(game.storyMode, 'INTRO', 'Initial splash should be intro story');
 
-game.startGame();
-assert.equal(game.gameState, 'PLAYING', 'startGame should enter PLAYING');
-assert.equal(game.currentWorld, 1, 'startGame should reset to world 1');
+game.handleStorySkip();
+assert.equal(game.storyMode, 'LEGEND', 'Skipping intro should open legend screen first');
+assert.equal(game.gameState, 'SPLASH', 'legend should still be in splash state');
+
+game.handleStorySkip();
+assert.equal(game.gameState, 'PLAYING', 'legend continue should enter PLAYING');
+assert.equal(game.currentWorld, 1, 'legend continue should start at world 1');
+
+game.restartGame();
+assert.equal(game.gameState, 'PLAYING', 'restartGame should restore playable state');
+assert.equal(game.currentWorld, 1, 'restartGame should reset world to 1');
+assert.equal(game.papaSandy.health, 3, 'restartGame should reset health');
 
 // Force complete world 1, then advance.
 game.levelCompleted = true;
@@ -94,11 +104,19 @@ game.nextLevel();
 assert.equal(game.currentWorld, 3, 'nextLevel should advance to world 3');
 game.handleStorySkip();
 
-// Final world should end in WIN instead of looping to world 1.
+// Final world should transition to a boss phase, then WIN after boss defeat.
 game.levelCompleted = true;
 game.nextLevel();
-assert.equal(game.gameState, 'WIN', 'final world completion should end in WIN state');
-assert.equal(game.currentWorld, 3, 'WIN should retain final world context');
+assert.equal(game.gameState, 'PLAYING', 'final world completion should remain playable for boss battle');
+assert.ok(game.bossBattle && game.bossBattle.active, 'boss battle should start after final world completion');
+assert.equal(game.currentWorld, 3, 'boss phase should retain final world context');
+
+game.bossBattle.health = 1;
+game.papaSandy.x = game.bossBattle.x;
+game.papaSandy.y = game.bossBattle.y - game.papaSandy.height + 2;
+game.papaSandy.velocityY = 8;
+game.checkBossCollisions();
+assert.equal(game.gameState, 'WIN', 'defeating boss should end in WIN state');
 
 game.restartGame();
 assert.equal(game.gameState, 'PLAYING', 'restartGame should restore playable state');

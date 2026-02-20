@@ -23,7 +23,7 @@ class SandylandGame {
         this.currentMusicTrack = 0;
         
         // Story system
-        this.storyMode = 'INTRO'; // INTRO, WORLD_1, WORLD_2, WORLD_3, VICTORY
+        this.storyMode = 'INTRO'; // INTRO, LEGEND, WORLD_1, WORLD_2, WORLD_3, VICTORY
         this.storyText = '';
         this.storyTimer = 0;
         this.storySpeed = 2;
@@ -50,7 +50,24 @@ Now, Papa Sandy must rescue his car!
 Using his tire-rolling skills from his salesman days,
 he embarks on an epic adventure across three worlds!
 
-Press SPACE to begin the rescue mission!`,
+Press SPACE to continue!`,
+
+            LEGEND: `SPRITE KEY
+
+Papa Sandy: You
+⭐ Star: collect 2 to clear worlds
+🛞 Tire: push (B) or throw (T)
+Crab/Minion/Coconut: avoid or defeat
+Power-ups: stars boost score
+White Corvette + Dr.vette: final boss cue
+
+Controls:
+Move: Arrow keys / A,D
+Jump/Stomp: Space / W / Up
+Push tire: B
+Throw tire: T
+
+Press SPACE / ENTER / TAP to start!`,
 
             WORLD_1: `WORLD 1: BEACH PARADISE
 
@@ -151,6 +168,10 @@ A tribute to Papa Sandy's legacy.`
         this.levelCompleted = false;
         this.levelCompletionThreshold = 2; // Need to collect 2 stars
         this.checkpoint = { x: 100, y: this.groundY - this.papaSandy.height, world: 1 };
+
+        // Finale boss phase
+        this.bossBattle = null;
+        this.bossObjectiveText = 'BOSS: Defeat Dr.vette! STOMP or hit with pushed/thrown tires.';
         
         this.setupEventListeners();
         this.initializeAudio();
@@ -734,7 +755,7 @@ A tribute to Papa Sandy's legacy.`
         // Don't update game logic if in story mode
         if (this.gameState === 'SPLASH') return;
         if (this.gameState !== 'PLAYING') return;
-        if (this.levelCompleted) return;
+        if (this.levelCompleted && !(this.bossBattle && this.bossBattle.active)) return;
         
         // Handle horizontal movement
         if (this.keys['ArrowLeft'] || this.keys['KeyA']) {
@@ -820,6 +841,11 @@ A tribute to Papa Sandy's legacy.`
                 }
             }
         }
+
+        // Finale boss phase update
+        if (this.bossBattle && this.bossBattle.active) {
+            this.updateBossBattle();
+        }
         
         // Check power-up collection
         for (let powerUp of this.powerUps) {
@@ -836,7 +862,11 @@ A tribute to Papa Sandy's legacy.`
                     // Check if level is completed
                     const collectedCount = this.powerUps.filter(p => p.collected).length;
                     if (collectedCount >= this.levelCompletionThreshold) {
-                        this.levelCompleted = true;
+                        if (this.currentWorld === this.totalWorlds) {
+                            this.startBossBattle();
+                        } else {
+                            this.levelCompleted = true;
+                        }
                     }
                 }
             }
@@ -886,6 +916,10 @@ A tribute to Papa Sandy's legacy.`
             }
         }
         
+        if (this.bossBattle && this.bossBattle.active) {
+            this.checkBossCollisions();
+        }
+
         // Update animation state
         this.papaSandy.animationTimer++;
         if (!this.papaSandy.onGround) {
@@ -1175,9 +1209,18 @@ A tribute to Papa Sandy's legacy.`
                 }
             }
         }
+
+        // Draw finale set dressing and boss
+        if (this.bossBattle && this.bossBattle.active) {
+            this.drawBossScene();
+        }
         
         // Draw Papa Sandy (pixel-art sprite with simple animation states)
         this.drawPapaSandy();
+
+        if (this.bossBattle && this.bossBattle.active) {
+            this.drawDrVette();
+        }
         
         // Draw enemies
         for (let enemy of this.enemies) {
@@ -1270,6 +1313,13 @@ A tribute to Papa Sandy's legacy.`
         const collectedCount = this.powerUps.filter(p => p.collected).length;
         drawHudText('Stars: ' + collectedCount + '/' + this.levelCompletionThreshold, 14, 122, '#FFE082', 18);
 
+        if (this.bossBattle && this.bossBattle.active) {
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            this.ctx.fillRect(380, 8, 412, 72);
+            drawHudText(this.bossObjectiveText, 390, 34, '#FFECB3', 15);
+            drawHudText('Dr.vette HP: ' + this.bossBattle.health + '/' + this.bossBattle.maxHealth, 390, 62, '#FF8A80', 18);
+        }
+
         // Draw controls info
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
         this.ctx.fillRect(8, this.canvas.height - 30, this.canvas.width - 16, 22);
@@ -1294,7 +1344,7 @@ A tribute to Papa Sandy's legacy.`
             if (this.currentWorld < this.totalWorlds) {
                 this.ctx.fillText('Press SPACE to advance to ' + this.worldNames[this.currentWorld + 1], this.canvas.width/2, this.canvas.height/2 + 40);
             } else {
-                this.ctx.fillText('Press SPACE to rescue the Corvette!', this.canvas.width/2, this.canvas.height/2 + 40);
+                this.ctx.fillText('Press SPACE to challenge Dr.vette!', this.canvas.width/2, this.canvas.height/2 + 40);
             }
         }
 
@@ -1345,11 +1395,10 @@ A tribute to Papa Sandy's legacy.`
         // Add bonus points for world completion
         this.score += 100;
 
-        // Final world completes the game
+        // Final world transitions into boss battle, not direct win
         if (this.currentWorld >= this.totalWorlds) {
             this.levelCompleted = false;
-            this.gameState = 'WIN';
-            this.stopBackgroundMusic();
+            this.startBossBattle();
             return;
         }
 
@@ -1357,6 +1406,7 @@ A tribute to Papa Sandy's legacy.`
         this.currentWorld += 1;
         this.levelCompleted = false;
         this.initializeWorld(this.currentWorld);
+        this.bossBattle = null;
         this.resetPlayerForWorldStart();
         this.showWorldIntro();
     }
@@ -1603,6 +1653,175 @@ A tribute to Papa Sandy's legacy.`
             this.score += 75;
         }
     }
+
+
+    startBossBattle() {
+        if (this.bossBattle && this.bossBattle.active) return;
+        this.levelCompleted = false;
+        this.bossBattle = {
+            active: true,
+            x: 620,
+            y: this.groundY - 96,
+            width: 64,
+            height: 96,
+            velocityX: 1.8,
+            direction: -1,
+            patrolStart: 500,
+            patrolEnd: 740,
+            health: 8,
+            maxHealth: 8,
+            hurtCooldown: 0,
+            attackTimer: 0
+        };
+
+        // Make room for a boss arena feel
+        this.enemies.forEach((enemy) => { enemy.alive = false; });
+        this.papaSandy.x = 120;
+        this.papaSandy.y = this.groundY - this.papaSandy.height;
+        this.papaSandy.velocityX = 0;
+        this.papaSandy.velocityY = 0;
+    }
+
+    updateBossBattle() {
+        const boss = this.bossBattle;
+        if (!boss || !boss.active) return;
+
+        boss.attackTimer++;
+        boss.x += boss.velocityX * boss.direction;
+
+        if (boss.x <= boss.patrolStart || boss.x + boss.width >= boss.patrolEnd) {
+            boss.direction *= -1;
+        }
+
+        // short charge bursts to increase pressure
+        if (boss.attackTimer > 180) {
+            boss.attackTimer = 0;
+            boss.direction = this.papaSandy.x < boss.x ? -1 : 1;
+            boss.velocityX = 3.2;
+        } else if (boss.velocityX > 1.8) {
+            boss.velocityX *= 0.98;
+            if (boss.velocityX < 1.8) boss.velocityX = 1.8;
+        }
+
+        if (boss.hurtCooldown > 0) boss.hurtCooldown--;
+
+        // Tires damage the boss
+        for (let tire of this.tires) {
+            if (!tire.pushed) continue;
+            if (tire.x < boss.x + boss.width && tire.x + tire.width > boss.x && tire.y < boss.y + boss.height && tire.y + tire.height > boss.y) {
+                if (boss.hurtCooldown <= 0) {
+                    const damage = tire.thrown ? 2 : 1;
+                    boss.health -= damage;
+                    boss.hurtCooldown = 20;
+                    this.score += damage * 200;
+                }
+                tire.pushed = false;
+                tire.thrown = false;
+                tire.velocityX = 0;
+                tire.velocityY = 0;
+                tire.pushTime = 0;
+                tire.y = this.groundY - tire.height;
+            }
+        }
+
+        if (boss.health <= 0) {
+            boss.active = false;
+            this.gameState = 'WIN';
+            this.stopBackgroundMusic();
+        }
+    }
+
+    checkBossCollisions() {
+        const boss = this.bossBattle;
+        if (!boss || !boss.active) return;
+
+        const overlaps = this.papaSandy.x < boss.x + boss.width &&
+            this.papaSandy.x + this.papaSandy.width > boss.x &&
+            this.papaSandy.y < boss.y + boss.height &&
+            this.papaSandy.y + this.papaSandy.height > boss.y;
+
+        if (!overlaps) return;
+
+        const previousBottom = (this.papaSandy.y - this.papaSandy.velocityY) + this.papaSandy.height;
+        const stompedFromAbove = this.papaSandy.velocityY > 0 && previousBottom <= boss.y + 8;
+
+        if (stompedFromAbove && boss.hurtCooldown <= 0) {
+            boss.health -= 1;
+            boss.hurtCooldown = 24;
+            this.papaSandy.velocityY = -this.papaSandy.jumpPower * 0.8;
+            this.papaSandy.onGround = false;
+            this.score += 180;
+            if (boss.health <= 0) {
+                boss.active = false;
+                this.gameState = 'WIN';
+                this.stopBackgroundMusic();
+            }
+            return;
+        }
+
+        if (!this.papaSandy.invulnerable) {
+            this.papaSandy.health--;
+            this.papaSandy.invulnerable = true;
+            this.papaSandy.invulnerableTimer = 90;
+            if (this.papaSandy.health <= 0) {
+                this.gameState = 'GAME_OVER';
+                this.stopBackgroundMusic();
+            } else {
+                this.respawnAtCheckpoint();
+            }
+        }
+    }
+
+    drawBossScene() {
+        // White Corvette parked near/behind Dr.vette
+        const carX = 500;
+        const carY = this.groundY - 54;
+        this.ctx.fillStyle = '#FDFDFD';
+        this.ctx.fillRect(carX, carY + 16, 110, 26);
+        this.ctx.fillRect(carX + 24, carY, 52, 18);
+        this.ctx.fillStyle = '#B0C4DE';
+        this.ctx.fillRect(carX + 30, carY + 3, 40, 12);
+        this.ctx.fillStyle = '#1E1E1E';
+        this.ctx.fillRect(carX + 16, carY + 36, 22, 18);
+        this.ctx.fillRect(carX + 78, carY + 36, 22, 18);
+    }
+
+    drawDrVette() {
+        const boss = this.bossBattle;
+        if (!boss || !boss.active) return;
+
+        // Dr.vette: vet/lab-coat silhouette, ~2x Papa Sandy height
+        this.ctx.fillStyle = '#2B1B0F'; // hair
+        this.ctx.fillRect(boss.x + 16, boss.y + 2, 32, 20);
+        this.ctx.fillStyle = '#EBC9A8'; // face
+        this.ctx.fillRect(boss.x + 20, boss.y + 12, 24, 18);
+
+        this.ctx.fillStyle = '#FFFFFF'; // lab coat body
+        this.ctx.fillRect(boss.x + 12, boss.y + 30, 40, 50);
+        this.ctx.fillRect(boss.x + 8, boss.y + 34, 12, 34);
+        this.ctx.fillRect(boss.x + 44, boss.y + 34, 12, 34);
+
+        this.ctx.fillStyle = '#C62828'; // vet cross badge
+        this.ctx.fillRect(boss.x + 30, boss.y + 42, 4, 14);
+        this.ctx.fillRect(boss.x + 25, boss.y + 47, 14, 4);
+
+        this.ctx.fillStyle = '#7E57C2'; // outfit under coat
+        this.ctx.fillRect(boss.x + 22, boss.y + 52, 20, 22);
+        this.ctx.fillStyle = '#212121';
+        this.ctx.fillRect(boss.x + 18, boss.y + 80, 10, 16);
+        this.ctx.fillRect(boss.x + 36, boss.y + 80, 10, 16);
+
+        // eyes
+        this.ctx.fillStyle = '#000000';
+        this.ctx.fillRect(boss.x + 26, boss.y + 18, 3, 3);
+        this.ctx.fillRect(boss.x + 35, boss.y + 18, 3, 3);
+
+        // hit flash
+        if (boss.hurtCooldown > 0 && Math.floor(boss.hurtCooldown / 3) % 2) {
+            this.ctx.fillStyle = 'rgba(255, 64, 129, 0.35)';
+            this.ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+        }
+    }
     
     // Story system methods
     startStory(mode) {
@@ -1636,6 +1855,10 @@ A tribute to Papa Sandy's legacy.`
             if (this.storyScrollY >= this.storyMaxScroll) {
                 this.storyScrollY = this.storyMaxScroll;
                 this.storyAutoScroll = false;
+                if (this.storyMode === 'INTRO') {
+                    this.startStory('LEGEND');
+                    return;
+                }
             }
         }
     }
@@ -1655,6 +1878,8 @@ A tribute to Papa Sandy's legacy.`
         let titleText = '';
         if (this.storyMode === 'INTRO') {
             titleText = 'SANDYLAND';
+        } else if (this.storyMode === 'LEGEND') {
+            titleText = 'HOW TO PLAY';
         } else if (this.storyMode === 'WORLD_1') {
             titleText = 'WORLD 1: BEACH PARADISE';
         } else if (this.storyMode === 'WORLD_2') {
@@ -1666,6 +1891,11 @@ A tribute to Papa Sandy's legacy.`
         }
         
         this.ctx.fillText(titleText, this.canvas.width / 2, 60);
+
+        if (this.storyMode === 'LEGEND') {
+            this.drawLegendScreen();
+            return;
+        }
         
         // Draw cinematic scrolling story text
         this.ctx.fillStyle = '#FFFFFF';
@@ -1695,9 +1925,68 @@ A tribute to Papa Sandy's legacy.`
         
         // Skip still works via key/tap, but we intentionally omit on-screen skip text to keep intro clean.
     }
+
+    drawLegendScreen() {
+        this.ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        this.ctx.fillRect(40, 90, 720, 420);
+
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '18px Courier New';
+        this.ctx.textAlign = 'left';
+
+        // Sprite/icon key
+        this.ctx.fillStyle = '#F2F2F2';
+        this.ctx.fillRect(70, 128, 16, 24);
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.fillText('Papa Sandy (you)', 100, 145);
+
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.fillRect(70, 168, 18, 18);
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.fillText('Star power-up (collect 2 per world)', 100, 183);
+
+        this.ctx.fillStyle = '#333333';
+        this.ctx.fillRect(70, 202, 24, 24);
+        this.ctx.fillStyle = '#999999';
+        this.ctx.fillRect(76, 208, 12, 12);
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.fillText('Tire: B push / T throw', 100, 220);
+
+        this.ctx.fillStyle = '#FF6347';
+        this.ctx.fillRect(70, 240, 24, 16);
+        this.ctx.fillStyle = '#4B0082';
+        this.ctx.fillRect(98, 236, 20, 20);
+        this.ctx.fillStyle = '#8B4513';
+        this.ctx.fillRect(124, 240, 16, 16);
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.fillText('Enemies: crab / minion / coconut', 150, 253);
+
+        this.ctx.fillStyle = '#FDFDFD';
+        this.ctx.fillRect(70, 280, 72, 16);
+        this.ctx.fillRect(86, 268, 32, 12);
+        this.ctx.fillStyle = '#EBC9A8';
+        this.ctx.fillRect(154, 264, 14, 12);
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.fillRect(150, 276, 22, 26);
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.fillText('Final cue: White Corvette + Dr.vette boss', 180, 290);
+
+        this.ctx.fillStyle = '#CFE8FF';
+        this.ctx.fillText('Controls: Move Arrows/A,D | Jump Space/W/Up | Stomp from above', 70, 350);
+        this.ctx.fillText('Mobile: Use on-screen buttons (← ↑ 🛞 🥏)', 70, 382);
+
+        this.ctx.fillStyle = '#FFD700';
+        this.ctx.font = 'bold 20px Courier New';
+        this.ctx.fillText('Press SPACE / ENTER / TAP to begin!', 70, 440);
+    }
     
     handleStorySkip() {
         if (this.storyMode === 'INTRO') {
+            this.startStory('LEGEND');
+            return;
+        }
+
+        if (this.storyMode === 'LEGEND') {
             this.startGame();
             return;
         }
@@ -1715,6 +2004,7 @@ A tribute to Papa Sandy's legacy.`
         this.levelCompleted = false;
         this.papaSandy.health = 3;
         this.initializeWorld(1);
+        this.bossBattle = null;
         this.resetPlayerForWorldStart();
     }
     

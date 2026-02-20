@@ -75,11 +75,41 @@ Implemented in `simple-game.js` mobile control system:
 - `node --check performance-monitor.js` ✅
 - `node --check levels/level1-1.js` ✅
 
+## Phase E: Finale Boss Battle + Legend Screen (2026-02-20)
+
+### ✅ Boss battle integrated into canonical runtime (`index.html` + `simple-game.js`)
+- Added **Dr.vette boss phase** triggered after collecting all stars in World 3.
+- Boss is rendered as a **vet/lab-coat character at ~2x Papa Sandy height**.
+- Added **white Corvette** visual set piece behind/near boss in finale arena.
+- Added playable boss mechanics aligned with existing controls:
+  - **Stomp from above** damages boss.
+  - **Push/throw tires** damages boss (thrown tires deal extra damage).
+  - Boss patrols/charges and still damages Papa Sandy on contact.
+- **WIN state now only occurs after boss defeat** (no direct win on World 3 completion).
+
+### ✅ Boss objective readability
+- Added on-screen objective banner during boss phase:
+  - `BOSS: Defeat Dr.vette! STOMP or hit with pushed/thrown tires.`
+- Added boss HP display in HUD (`Dr.vette HP: x/8`).
+
+### ✅ Intro-to-game legend/sprite key screen
+- Added lightweight **LEGEND** splash stage between intro and gameplay.
+- Intro flow now routes: `INTRO` → `LEGEND` → `PLAYING`.
+- Legend explains key sprites/icons and controls:
+  - Papa Sandy, stars, tires, enemies, power-up role, Corvette + boss cue.
+  - Jump/stomp, push, throw controls plus mobile button hint.
+- Continues with **key/tap** (mobile-friendly via existing touch skip handling).
+
+### ✅ Validation (post-Phase E)
+- `node --check simple-game.js` ✅
+- `node --check scripts/phase-c-sanity.js` ✅
+- `node scripts/phase-c-sanity.js` ✅ (updated to assert legend flow and boss-win flow)
+
 ## Final Gaps / Follow-ups (non-blocking)
 1. Optional CI wiring for sanity + syntax checks on PR/push.
 2. Optional future decision on `game.js` archival/removal to reduce maintenance split.
-3. Optional UX polish for story pacing consistency between intro and world transitions.
+3. Boss tuning pass (HP/damage/speed) based on playtest feel.
 
-## Release Readiness (Phase D scope)
+## Release Readiness (Phase E scope)
 - **Ready for release within current scope.**
-- Core play loop, progression, terminal states, touch-first restart/menu flows, and HUD readability are all in-place on canonical runtime.
+- Canonical runtime now includes world progression through a final boss encounter, readable boss objective UI, and a pre-game legend/sprite key screen.
