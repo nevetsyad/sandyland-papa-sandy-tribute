@@ -48,19 +48,27 @@ Navigate through Sandyland, use tire-rolling skills to break barriers, collect p
 
 ```
 sandyland/
-├── index.html              # Main game file with HTML/CSS setup
-├── game.js                 # Complete game engine and logic
-├── level1-1.js             # Level 1-1 implementation
-├── performance-monitor.js   # Performance tracking system
-├── assets/                 # Game assets directory
-│   ├── audio/              # Sound effects and music
-│   ├── levels/             # Level data files
-│   └── sprites/            # Character and sprite assets
-├── levels/                 # Level implementations
-│   └── level1-1.js          # First level tutorial
-├── README.md               # This documentation file
-└── github-deployment-guide.md # GitHub Pages deployment instructions
+├── index.html                  # Main game entry point (canonical runtime)
+├── simple-game.js              # Canonical game engine used in production
+├── game.js                     # Alternate/advanced runtime (non-canonical)
+├── performance-monitor.js      # Performance tracking system
+├── assets/                     # Game assets directory
+│   ├── audio/                  # Sound effects and music
+│   ├── levels/                 # Level data files
+│   └── sprites/                # Character and sprite assets
+├── levels/                     # Level implementations
+│   └── level1-1.js             # First level tutorial
+├── archive/                    # Backup/test harness files (non-deployment)
+├── README.md                   # This documentation file
+└── github-deployment-guide.md  # GitHub Pages deployment instructions
 ```
+
+## 🧭 **Canonical Runtime Decision**
+
+- **Release runtime:** `index.html` loads **`simple-game.js`**
+- **`game.js` status:** kept as a non-canonical alternate build for development/reference
+- **Deployment rule:** publish from `index.html` + `simple-game.js`; do not use files in `archive/` for production
+
 
 ## 🚀 **Quick Start**
 
@@ -188,7 +196,7 @@ Complete deployment guide available at [github-deployment-guide.md](github-deplo
 - **Cross-device** compatibility
 
 ### **Customization Options**
-- **Game difficulty** adjustments in game.js
+- **Game difficulty** adjustments in simple-game.js (canonical runtime)
 - **Visual themes** and color schemes
 - **Sound levels** and audio settings
 - **Control schemes** for different preferences

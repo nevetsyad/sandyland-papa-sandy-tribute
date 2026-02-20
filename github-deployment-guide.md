@@ -4,17 +4,19 @@
 
 ```
 your-github-username.github.io/
-├── index.html                 # Main Sandyland game file
-├── game.js                    # Complete game engine
+├── index.html                 # Main Sandyland game file (entrypoint)
+├── simple-game.js             # Canonical runtime engine used by index.html
 ├── assets/                    # Game assets directory
 │   ├── audio/                 # Sound effects and music
 │   ├── levels/                # Level data files
 │   └── sprites/               # Character and sprite assets
 ├── levels/
 │   └── level1-1.js            # Level 1-1 implementation
-├── README.md                  # This deployment guide
+├── README.md                  # Project documentation
 └── .nojekyll                  # Enable proper asset serving
 ```
+
+> Runtime note: production deploys use `index.html` + `simple-game.js`. `game.js` is non-canonical and not required for release.
 
 ## 🚀 **Step 1: Create GitHub Repository**
 
@@ -31,8 +33,8 @@ your-github-username.github.io/
 ### **Method A: GitHub Web Interface**
 1. **Click** "Add file" → "Upload files"
 2. **Drag & drop** the following files into the upload area:
-   - `index.html` (Main game file)
-   - `game.js` (Game engine)
+   - `index.html` (Main game entrypoint)
+   - `simple-game.js` (Canonical game engine)
    - `level1-1.js` (Level data)
    - `.nojekyll` (Enable proper asset serving)
 3. **Create folder structure**:
@@ -139,7 +141,7 @@ Edit meta tags around lines 16-25:
 ```
 
 ### **Game Difficulty Settings**
-You can modify game parameters in `game.js`:
+You can modify game parameters in `simple-game.js` (canonical runtime):
 ```javascript
 // Easy mode adjustments
 this.gravity = 0.6;      // Lower gravity for easier jumping
@@ -204,7 +206,7 @@ this.papaSandy.speed = 5; // Faster movement
 
 ### **Adding New Levels**
 1. Create new level files in `levels/` directory
-2. Add level loading logic to `game.js`
+2. Add level loading logic to `simple-game.js` (or switch runtime intentionally if you adopt `game.js`)
 3. Update level progression system
 4. Test thoroughly before deploying
 
