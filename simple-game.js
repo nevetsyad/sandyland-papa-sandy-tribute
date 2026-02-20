@@ -2133,6 +2133,12 @@ A tribute to Papa Sandy's legacy.`
     }
     
     handleStorySkip() {
+        // Prevent accidental instant skips from initial key/touch events
+        if (this.gameState === 'SPLASH' && this.splashSkipLocked) return;
+
+        // Ensure intro is visible briefly before allowing transition
+        if (this.storyMode === 'INTRO' && this.storyTimer < 45) return;
+
         if (this.storyMode === 'INTRO') {
             this.startStory('LEGEND');
             return;
