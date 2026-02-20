@@ -23,7 +23,7 @@ class SandylandGame {
         this.currentMusicTrack = 0;
         
         // Story system
-        this.storyMode = 'INTRO'; // INTRO, LEGEND, WORLD_1, WORLD_2, WORLD_3, VICTORY
+        this.storyMode = 'LEGEND'; // INTRO, LEGEND, WORLD_1, WORLD_2, WORLD_3, VICTORY
         this.storyText = '';
         this.storyTimer = 0;
         this.storySpeed = 2;
@@ -1695,7 +1695,7 @@ A tribute to Papa Sandy's legacy.`
         this.levelCompleted = false;
         this.papaSandy.health = 3;
         this.winCelebrationStart = 0;
-        this.startStory('INTRO');
+        this.startStory('LEGEND');
         this.updateMobileControlsVisibility();
     }
 
