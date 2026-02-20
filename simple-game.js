@@ -189,57 +189,91 @@ A tribute to Papa Sandy's legacy.`
     }
     
     initializeBackgroundMusic() {
-        if (!this.audioContext) return;
-        
-        // Create country-style background music
-        this.createCountryMusicLoop();
+        if (!this.audioContext || this.musicMuted) return;
+
+        if (this.gameState === 'SPLASH') {
+            this.createIntroMusicLoop();
+        } else if (this.gameState === 'PLAYING') {
+            this.createCountryMusicLoop();
+        }
     }
     
-    createCountryMusicLoop() {
+    playMelodyLoop(notes, durations, options = {}) {
         if (!this.audioContext || this.musicMuted) return;
-        
-        // Create a simple country-style melody using Web Audio API
-        const notes = [196, 196, 220, 196, 262, 220]; // G3, G3, A3, G3, C4, A3
-        const durations = [0.4, 0.4, 0.8, 0.4, 0.8, 0.8]; // Quarter, quarter, half, quarter, half, half
-        
+
+        const {
+            type = 'triangle',
+            volumeScale = 1,
+            lowpass = 1000,
+            q = 10,
+            shouldContinue = () => true,
+            loopMs = 4000
+        } = options;
+
         let currentTime = this.audioContext.currentTime;
-        
+
         notes.forEach((note, index) => {
             const oscillator = this.audioContext.createOscillator();
             const gainNode = this.audioContext.createGain();
-            
-            // Create warm acoustic guitar-like tone
-            oscillator.type = 'triangle';
+
+            oscillator.type = type;
             oscillator.frequency.setValueAtTime(note, currentTime);
-            
-            // Add gentle volume envelope for acoustic feel
+
             gainNode.gain.setValueAtTime(0, currentTime);
-            gainNode.gain.linearRampToValueAtTime(this.musicVolume * 0.3, currentTime + 0.05);
-            gainNode.gain.linearRampToValueAtTime(this.musicVolume * 0.2, currentTime + 0.1);
+            gainNode.gain.linearRampToValueAtTime(this.musicVolume * 0.3 * volumeScale, currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(this.musicVolume * 0.2 * volumeScale, currentTime + 0.1);
             gainNode.gain.linearRampToValueAtTime(0, currentTime + durations[index]);
-            
-            // Add subtle low-pass filter for acoustic guitar effect
+
             const filter = this.audioContext.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(1000, currentTime);
-            filter.Q.setValueAtTime(10, currentTime);
-            
+            filter.frequency.setValueAtTime(lowpass, currentTime);
+            filter.Q.setValueAtTime(q, currentTime);
+
             oscillator.connect(filter);
             filter.connect(gainNode);
             gainNode.connect(this.audioContext.destination);
-            
+
             oscillator.start(currentTime);
             oscillator.stop(currentTime + durations[index]);
-            
+
             currentTime += durations[index];
         });
-        
-        // Loop the music every 4 seconds
+
         setTimeout(() => {
-            if (this.gameState === 'PLAYING' && !this.musicMuted) {
-                this.createCountryMusicLoop();
+            if (!this.musicMuted && shouldContinue()) {
+                this.playMelodyLoop(notes, durations, options);
             }
-        }, 4000);
+        }, loopMs);
+    }
+
+    createCountryMusicLoop() {
+        // Main gameplay music
+        const notes = [196, 196, 220, 196, 262, 220]; // G3, G3, A3, G3, C4, A3
+        const durations = [0.4, 0.4, 0.8, 0.4, 0.8, 0.8];
+
+        this.playMelodyLoop(notes, durations, {
+            type: 'triangle',
+            volumeScale: 1,
+            lowpass: 1000,
+            q: 10,
+            shouldContinue: () => this.gameState === 'PLAYING',
+            loopMs: 4000
+        });
+    }
+
+    createIntroMusicLoop() {
+        // Softer intro/story music while scrolling text is up
+        const notes = [262, 294, 330, 294, 262, 220]; // C4, D4, E4, D4, C4, A3
+        const durations = [0.6, 0.5, 0.8, 0.5, 0.8, 1.0];
+
+        this.playMelodyLoop(notes, durations, {
+            type: 'sine',
+            volumeScale: 0.7,
+            lowpass: 850,
+            q: 8,
+            shouldContinue: () => this.gameState === 'SPLASH',
+            loopMs: 4200
+        });
     }
     
     toggleMute() {
@@ -1830,6 +1864,7 @@ A tribute to Papa Sandy's legacy.`
         this.storyScrollY = 0;
         this.storyAutoScroll = true;
         this.gameState = 'SPLASH';
+        this.initializeBackgroundMusic();
         
         // Calculate max scroll distance
         const lines = this.stories[this.storyMode].split('\n');
