@@ -46,7 +46,7 @@ by clearing all 3 worlds and defeating Dr.vette.
 
 How to win each world:
 🪙 Collect 2 gold bullions to unlock the next area
-🛞 Use tires: push (B) or throw (T)
+🛞 Use tires: E to push or throw (auto-picks best)
 🐴 Use E for action: throw tire, mount/dismount horse, and nearby interact
 🦀 Enemies (crab/minion/coconut): avoid, stomp, or hit with tires
 
@@ -59,7 +59,7 @@ Press SPACE to continue!`,
 
 Papa Sandy: You
 🪙 Gold bullion: collect 2 to clear worlds
-🛞 Tire: push (B), throw (T), or quick action (E)
+🛞 Tire: E to push or throw (auto-picks best)
 🐴 Horse/Gates: E to mount/dismount/interact (World 2)
 Crab/Minion/Coconut: avoid or defeat
 Power-ups: stars boost score
@@ -69,8 +69,6 @@ Controls:
 Move: Arrow keys / A,D
 Jump/Stomp: Space / W / Up
 Action/Interact: E
-Push tire: B
-Throw tire: T
 
 Press SPACE / ENTER / TAP to start!`,
 
@@ -621,11 +619,8 @@ A tribute to Papa Sandy's legacy.`
             }
 
             // Keep legacy controls functional
-            if (e.code === 'KeyB' && this.gameState === 'PLAYING') {
-                this.pushNearestTire();
-            }
-            if (e.code === 'KeyT' && this.gameState === 'PLAYING') {
-                this.throwNearestTire();
+            if (e.code === 'KeyE' && this.gameState === 'PLAYING') {
+                this.handleUniversalAction();
             }
             
             e.preventDefault();
@@ -736,7 +731,7 @@ A tribute to Papa Sandy's legacy.`
         };
         const throwAction = (e) => {
             if (e) e.preventDefault();
-            if (this.gameState === 'PLAYING') this.handleActionPress();
+            if (this.gameState === 'PLAYING') this.handleUniversalAction();
         };
         throwBtn.addEventListener('touchstart', throwAction);
         throwBtn.addEventListener('mousedown', throwAction);
