@@ -11,8 +11,9 @@ class SandylandGame {
         this.groundY = 500;
         
         // Game states
-        this.gameState = 'SPLASH'; // SPLASH, PLAYING, PAUSED, GAME_OVER
+        this.gameState = 'SPLASH'; // SPLASH, PLAYING, PAUSED, GAME_OVER, WIN
         this.menuState = 'CLOSED'; // CLOSED, PAUSED, MAIN
+        this.reducedEffects = false;
         
         // Background music system
         this.audioContext = null;
@@ -487,6 +488,11 @@ A tribute to Papa Sandy's legacy.`
             if (e.code === 'Escape' && (this.gameState === 'PLAYING' || this.gameState === 'PAUSED')) {
                 this.toggleMenu();
             }
+
+            // Low-clutter accessibility toggle
+            if (e.code === 'KeyV') {
+                this.toggleReducedEffects();
+            }
             
             // Handle tire pushing
             if (e.code === 'KeyB' && this.gameState === 'PLAYING') {
@@ -521,122 +527,151 @@ A tribute to Papa Sandy's legacy.`
     }
     
     createMobileControls() {
-        // Control panel container
+        const createButton = (label, bg = '#2c3e50', minWidth = '64px') => {
+            const btn = document.createElement('button');
+            btn.textContent = label;
+            btn.style.minWidth = minWidth;
+            btn.style.height = '56px';
+            btn.style.padding = '0 14px';
+            btn.style.fontSize = '20px';
+            btn.style.fontWeight = 'bold';
+            btn.style.border = '2px solid rgba(255,255,255,0.85)';
+            btn.style.borderRadius = '12px';
+            btn.style.background = bg;
+            btn.style.color = 'white';
+            btn.style.cursor = 'pointer';
+            btn.style.touchAction = 'manipulation';
+            btn.style.opacity = '0.95';
+            return btn;
+        };
+
         const controlPanel = document.createElement('div');
         controlPanel.style.position = 'fixed';
-        controlPanel.style.bottom = '20px';
+        controlPanel.style.bottom = '18px';
         controlPanel.style.left = '50%';
         controlPanel.style.transform = 'translateX(-50%)';
         controlPanel.style.display = 'flex';
-        controlPanel.style.gap = '10px';
+        controlPanel.style.gap = '8px';
         controlPanel.style.zIndex = '1000';
-        
-        // Left button
-        const leftBtn = document.createElement('button');
-        leftBtn.innerHTML = '←';
-        leftBtn.style.width = '60px';
-        leftBtn.style.height = '60px';
-        leftBtn.style.fontSize = '24px';
-        leftBtn.style.border = '2px solid #333';
-        leftBtn.style.borderRadius = '10px';
-        leftBtn.style.background = '#4CAF50';
-        leftBtn.style.color = 'white';
-        leftBtn.style.cursor = 'pointer';
-        
-        // Right button
-        const rightBtn = document.createElement('button');
-        rightBtn.innerHTML = '→';
-        rightBtn.style.width = '60px';
-        rightBtn.style.height = '60px';
-        rightBtn.style.fontSize = '24px';
-        rightBtn.style.border = '2px solid #333';
-        rightBtn.style.borderRadius = '10px';
-        rightBtn.style.background = '#4CAF50';
-        rightBtn.style.color = 'white';
-        rightBtn.style.cursor = 'pointer';
-        
-        // Jump button
-        const jumpBtn = document.createElement('button');
-        jumpBtn.innerHTML = '⬆️';
-        jumpBtn.style.width = '60px';
-        jumpBtn.style.height = '60px';
-        jumpBtn.style.fontSize = '24px';
-        jumpBtn.style.border = '2px solid #333';
-        jumpBtn.style.borderRadius = '10px';
-        jumpBtn.style.background = '#2196F3';
-        jumpBtn.style.color = 'white';
-        jumpBtn.style.cursor = 'pointer';
-        
-        // Tire roll button
-        const tireBtn = document.createElement('button');
-        tireBtn.innerHTML = '🛞';
-        tireBtn.style.width = '60px';
-        tireBtn.style.height = '60px';
-        tireBtn.style.fontSize = '24px';
-        tireBtn.style.border = '2px solid #333';
-        tireBtn.style.borderRadius = '10px';
-        tireBtn.style.background = '#FF9800';
-        tireBtn.style.color = 'white';
-        tireBtn.style.cursor = 'pointer';
-        
-        // Button event handlers
-        const handleButtonStart = (direction) => {
-            this.keys[`Arrow${direction.toUpperCase()}`] = true;
+
+        const actionPanel = document.createElement('div');
+        actionPanel.style.position = 'fixed';
+        actionPanel.style.top = '14px';
+        actionPanel.style.right = '14px';
+        actionPanel.style.display = 'flex';
+        actionPanel.style.flexDirection = 'column';
+        actionPanel.style.gap = '8px';
+        actionPanel.style.zIndex = '1001';
+
+        const leftBtn = createButton('←', '#388e3c');
+        const jumpBtn = createButton('↑', '#1976d2');
+        const tireBtn = createButton('🛞', '#f57c00');
+        const rightBtn = createButton('→', '#388e3c');
+
+        const menuBtn = createButton('MENU', '#6a1b9a', '78px');
+        const resumeBtn = createButton('RESUME', '#00796b', '92px');
+        const restartBtn = createButton('PLAY AGAIN', '#1565c0', '118px');
+        const mainMenuBtn = createButton('MAIN MENU', '#424242', '118px');
+        const fxBtn = createButton('FX: ON', '#455a64', '92px');
+
+        const setKey = (code, value) => {
+            this.keys[code] = value;
         };
-        
-        const handleButtonEnd = (direction) => {
-            this.keys[`Arrow${direction.toUpperCase()}`] = false;
+
+        const bindHold = (btn, code) => {
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); setKey(code, true); });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); setKey(code, false); });
+            btn.addEventListener('touchcancel', (e) => { e.preventDefault(); setKey(code, false); });
+            btn.addEventListener('mousedown', () => setKey(code, true));
+            btn.addEventListener('mouseup', () => setKey(code, false));
+            btn.addEventListener('mouseleave', () => setKey(code, false));
         };
-        
-        // Add event listeners
-        leftBtn.addEventListener('touchstart', () => handleButtonStart('Left'));
-        leftBtn.addEventListener('touchend', () => handleButtonEnd('Left'));
-        leftBtn.addEventListener('mousedown', () => handleButtonStart('Left'));
-        leftBtn.addEventListener('mouseup', () => handleButtonEnd('Left'));
-        
-        rightBtn.addEventListener('touchstart', () => handleButtonStart('Right'));
-        rightBtn.addEventListener('touchend', () => handleButtonEnd('Right'));
-        rightBtn.addEventListener('mousedown', () => handleButtonStart('Right'));
-        rightBtn.addEventListener('mouseup', () => handleButtonEnd('Right'));
-        
-        jumpBtn.addEventListener('touchstart', () => {
-            if (this.papaSandy.onGround) {
+
+        bindHold(leftBtn, 'ArrowLeft');
+        bindHold(rightBtn, 'ArrowRight');
+
+        const jumpAction = (e) => {
+            if (e) e.preventDefault();
+            if (this.gameState === 'PLAYING' && this.papaSandy.onGround) {
                 this.papaSandy.velocityY = -this.papaSandy.jumpPower;
                 this.papaSandy.onGround = false;
             }
-        });
-        jumpBtn.addEventListener('mousedown', () => {
-            if (this.papaSandy.onGround) {
-                this.papaSandy.velocityY = -this.papaSandy.jumpPower;
-                this.papaSandy.onGround = false;
-            }
-        });
-        
-        // Tire push button events
-        tireBtn.addEventListener('touchstart', () => {
-            this.pushNearestTire();
-        });
-        tireBtn.addEventListener('mousedown', () => {
-            this.pushNearestTire();
-        });
-        
-        // Add buttons to control panel
+        };
+        jumpBtn.addEventListener('touchstart', jumpAction);
+        jumpBtn.addEventListener('mousedown', jumpAction);
+
+        const tireAction = (e) => {
+            if (e) e.preventDefault();
+            if (this.gameState === 'PLAYING') this.pushNearestTire();
+        };
+        tireBtn.addEventListener('touchstart', tireAction);
+        tireBtn.addEventListener('mousedown', tireAction);
+
+        const activateMenu = (e) => {
+            if (e) e.preventDefault();
+            if (this.gameState === 'PLAYING' || this.gameState === 'PAUSED') this.toggleMenu();
+        };
+        menuBtn.addEventListener('touchstart', activateMenu);
+        menuBtn.addEventListener('mousedown', activateMenu);
+
+        const resumeAction = (e) => {
+            if (e) e.preventDefault();
+            if (this.gameState === 'PAUSED') this.toggleMenu();
+        };
+        resumeBtn.addEventListener('touchstart', resumeAction);
+        resumeBtn.addEventListener('mousedown', resumeAction);
+
+        const restartAction = (e) => {
+            if (e) e.preventDefault();
+            if (this.gameState === 'PAUSED' || this.gameState === 'GAME_OVER' || this.gameState === 'WIN') this.restartGame();
+        };
+        restartBtn.addEventListener('touchstart', restartAction);
+        restartBtn.addEventListener('mousedown', restartAction);
+
+        const mainMenuAction = (e) => {
+            if (e) e.preventDefault();
+            if (this.gameState === 'PAUSED' || this.gameState === 'GAME_OVER' || this.gameState === 'WIN') this.goToMainMenu();
+        };
+        mainMenuBtn.addEventListener('touchstart', mainMenuAction);
+        mainMenuBtn.addEventListener('mousedown', mainMenuAction);
+
+        const toggleFxAction = (e) => {
+            if (e) e.preventDefault();
+            this.toggleReducedEffects();
+            fxBtn.textContent = this.reducedEffects ? 'FX: LOW' : 'FX: ON';
+        };
+        fxBtn.addEventListener('touchstart', toggleFxAction);
+        fxBtn.addEventListener('mousedown', toggleFxAction);
+
         controlPanel.appendChild(leftBtn);
         controlPanel.appendChild(jumpBtn);
         controlPanel.appendChild(tireBtn);
         controlPanel.appendChild(rightBtn);
-        
-        // Add to document
+
+        actionPanel.appendChild(menuBtn);
+        actionPanel.appendChild(resumeBtn);
+        actionPanel.appendChild(restartBtn);
+        actionPanel.appendChild(mainMenuBtn);
+        actionPanel.appendChild(fxBtn);
+
         document.body.appendChild(controlPanel);
-        
-        // Store references for cleanup
+        document.body.appendChild(actionPanel);
+
         this.mobileControls = {
             panel: controlPanel,
+            actionPanel,
             left: leftBtn,
             right: rightBtn,
             jump: jumpBtn,
-            tire: tireBtn
+            tire: tireBtn,
+            menu: menuBtn,
+            resume: resumeBtn,
+            restart: restartBtn,
+            mainMenu: mainMenuBtn,
+            fx: fxBtn
         };
+
+        this.updateMobileControlsVisibility();
     }
     
     update() {
@@ -843,8 +878,13 @@ A tribute to Papa Sandy's legacy.`
         this.drawStory();
         
         // Don't draw game if in story mode
-        if (this.gameState === 'SPLASH') return;
-        
+        if (this.gameState === 'SPLASH') {
+            this.updateMobileControlsVisibility();
+            return;
+        }
+
+        this.updateMobileControlsVisibility();
+
         // Get world-specific colors
         const worldColors = this.worldColors[this.currentWorld];
         
@@ -860,28 +900,30 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.fillStyle = worldColors.grass;
         this.ctx.fillRect(0, this.groundY, this.canvas.width, 10);
         
-        // Draw background elements
-        for (let element of this.backgroundElements) {
-            if (element.type === 'palm') {
-                this.ctx.fillStyle = '#8B4513';
-                this.ctx.fillRect(element.x, element.y, 8, 40);
-                this.ctx.fillStyle = '#228B22';
-                this.ctx.beginPath();
-                this.ctx.arc(element.x + 4, element.y - 10, 20 * element.scale, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.fillStyle = '#8B4513';
-            } else if (element.type === 'cactus') {
-                this.ctx.fillStyle = '#228B22';
-                this.ctx.fillRect(element.x, element.y, 12, 30 * element.scale);
-                this.ctx.fillRect(element.x - 6, element.y + 10, 24, 8 * element.scale);
-            } else if (element.type === 'jungle') {
-                this.ctx.fillStyle = '#006400';
-                this.ctx.fillRect(element.x, element.y, 16, 50 * element.scale);
-                this.ctx.fillStyle = '#32CD32';
-                for (let i = 0; i < 3; i++) {
+        // Draw background elements (optional reduced-clutter mode)
+        if (!this.reducedEffects) {
+            for (let element of this.backgroundElements) {
+                if (element.type === 'palm') {
+                    this.ctx.fillStyle = '#8B4513';
+                    this.ctx.fillRect(element.x, element.y, 8, 40);
+                    this.ctx.fillStyle = '#228B22';
                     this.ctx.beginPath();
-                    this.ctx.arc(element.x + 8, element.y - 20 + i * 15, 15 * element.scale, 0, Math.PI * 2);
+                    this.ctx.arc(element.x + 4, element.y - 10, 20 * element.scale, 0, Math.PI * 2);
                     this.ctx.fill();
+                    this.ctx.fillStyle = '#8B4513';
+                } else if (element.type === 'cactus') {
+                    this.ctx.fillStyle = '#228B22';
+                    this.ctx.fillRect(element.x, element.y, 12, 30 * element.scale);
+                    this.ctx.fillRect(element.x - 6, element.y + 10, 24, 8 * element.scale);
+                } else if (element.type === 'jungle') {
+                    this.ctx.fillStyle = '#006400';
+                    this.ctx.fillRect(element.x, element.y, 16, 50 * element.scale);
+                    this.ctx.fillStyle = '#32CD32';
+                    for (let i = 0; i < 3; i++) {
+                        this.ctx.beginPath();
+                        this.ctx.arc(element.x + 8, element.y - 20 + i * 15, 15 * element.scale, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
                 }
             }
         }
@@ -957,30 +999,49 @@ A tribute to Papa Sandy's legacy.`
             }
         }
         
-        // Draw UI
-        this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = '20px Courier New';
-        this.ctx.textAlign = 'left';
-        
-        // World name
-        this.ctx.fillText('World: ' + this.worldNames[this.currentWorld], 10, 30);
-        this.ctx.fillText('Score: ' + this.score, 10, 60);
-        
-        // Draw health
-        this.ctx.fillStyle = '#FF0000';
-        this.ctx.fillText('Health: ', 10, 90);
+        // Draw HUD background panels for readability
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        this.ctx.fillRect(8, 8, 360, 132);
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        this.ctx.fillRect(8, 8, 360, 2);
+
+        const drawHudText = (text, x, y, color = '#FFFFFF', size = 20) => {
+            this.ctx.font = `${size}px Courier New`;
+            this.ctx.textAlign = 'left';
+            this.ctx.lineWidth = 4;
+            this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
+            this.ctx.strokeText(text, x, y);
+            this.ctx.fillStyle = color;
+            this.ctx.fillText(text, x, y);
+        };
+
+        drawHudText('World: ' + this.worldNames[this.currentWorld], 14, 34, '#FFFFFF', 20);
+        drawHudText('Score: ' + this.score, 14, 64, '#FFFFFF', 20);
+
+        drawHudText('Health:', 14, 94, '#FFB3B3', 18);
         for (let i = 0; i < this.papaSandy.health; i++) {
-            this.ctx.fillRect(80 + i * 25, 75, 20, 15);
+            this.ctx.fillStyle = '#E53935';
+            this.ctx.fillRect(108 + i * 24, 80, 18, 14);
+            this.ctx.strokeStyle = '#7F0000';
+            this.ctx.strokeRect(108 + i * 24, 80, 18, 14);
         }
-        
-        // Draw controls info
-        this.ctx.fillStyle = '#CCCCCC';
-        this.ctx.font = '12px Courier New';
-        this.ctx.fillText('Arrow Keys: Move | Space: Jump | B: Tire Roll', 10, this.canvas.height - 20);
-        
-        // Draw level progress
+
         const collectedCount = this.powerUps.filter(p => p.collected).length;
-        this.ctx.fillText('Stars: ' + collectedCount + '/' + this.levelCompletionThreshold, 10, 90);
+        drawHudText('Stars: ' + collectedCount + '/' + this.levelCompletionThreshold, 14, 122, '#FFE082', 18);
+
+        // Draw controls info
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        this.ctx.fillRect(8, this.canvas.height - 30, this.canvas.width - 16, 22);
+        this.ctx.font = '12px Courier New';
+        this.ctx.textAlign = 'left';
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+        const controlsText = this.reducedEffects
+            ? 'Controls: Arrows/A,D Move | Space/W Jump | B Tire | V FX ON/OFF'
+            : 'Controls: Arrows/A,D Move | Space/W Jump | B Tire | ESC Pause | V FX LOW';
+        this.ctx.strokeText(controlsText, 12, this.canvas.height - 14);
+        this.ctx.fillStyle = '#E0E0E0';
+        this.ctx.fillText(controlsText, 12, this.canvas.height - 14);
         
         // Draw level completion message
         if (this.levelCompleted) {
@@ -1005,7 +1066,7 @@ A tribute to Papa Sandy's legacy.`
             this.ctx.textAlign = 'center';
             this.ctx.fillText('PAUSED', this.canvas.width / 2, this.canvas.height / 2);
             this.ctx.font = '16px Courier New';
-            this.ctx.fillText('Press ESC to resume', this.canvas.width / 2, this.canvas.height / 2 + 40);
+            this.ctx.fillText('Press ESC to resume (or use RESUME button)', this.canvas.width / 2, this.canvas.height / 2 + 40);
         } else if (this.gameState === 'GAME_OVER') {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -1015,7 +1076,7 @@ A tribute to Papa Sandy's legacy.`
             this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2);
             this.ctx.fillStyle = '#FFFFFF';
             this.ctx.font = '16px Courier New';
-            this.ctx.fillText('Press R / ENTER / SPACE to restart', this.canvas.width / 2, this.canvas.height / 2 + 40);
+            this.ctx.fillText('Press R / ENTER / SPACE or tap PLAY AGAIN', this.canvas.width / 2, this.canvas.height / 2 + 40);
         } else if (this.gameState === 'WIN') {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -1027,7 +1088,7 @@ A tribute to Papa Sandy's legacy.`
             this.ctx.font = '18px Courier New';
             this.ctx.fillText('Papa Sandy rescued his Corvette!', this.canvas.width / 2, this.canvas.height / 2 + 12);
             this.ctx.font = '16px Courier New';
-            this.ctx.fillText('Press R / ENTER / SPACE to play again', this.canvas.width / 2, this.canvas.height / 2 + 46);
+            this.ctx.fillText('Press R / ENTER / SPACE or tap PLAY AGAIN', this.canvas.width / 2, this.canvas.height / 2 + 46);
         }
     }
     
@@ -1190,6 +1251,37 @@ A tribute to Papa Sandy's legacy.`
         this.initializeWorld(this.currentWorld);
         this.resetPlayerForWorldStart();
         this.playBackgroundMusic();
+        this.updateMobileControlsVisibility();
+    }
+
+    goToMainMenu() {
+        this.stopBackgroundMusic();
+        this.menuState = 'CLOSED';
+        this.keys = {};
+        this.currentWorld = 1;
+        this.levelCompleted = false;
+        this.papaSandy.health = 3;
+        this.startStory('INTRO');
+        this.updateMobileControlsVisibility();
+    }
+
+    toggleReducedEffects() {
+        this.reducedEffects = !this.reducedEffects;
+    }
+
+    updateMobileControlsVisibility() {
+        if (!this.mobileControls) return;
+
+        const isTerminal = this.gameState === 'GAME_OVER' || this.gameState === 'WIN';
+        const isPaused = this.gameState === 'PAUSED';
+        const canMove = this.gameState === 'PLAYING' && !this.levelCompleted;
+
+        this.mobileControls.panel.style.display = canMove ? 'flex' : 'none';
+        this.mobileControls.menu.style.display = (this.gameState === 'PLAYING' || isPaused) ? 'block' : 'none';
+        this.mobileControls.resume.style.display = isPaused ? 'block' : 'none';
+        this.mobileControls.restart.style.display = (isPaused || isTerminal) ? 'block' : 'none';
+        this.mobileControls.mainMenu.style.display = (isPaused || isTerminal) ? 'block' : 'none';
+        this.mobileControls.fx.style.display = (this.gameState !== 'SPLASH') ? 'block' : 'none';
     }
 
     toggleMenu() {

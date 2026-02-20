@@ -5,60 +5,64 @@
 - **Release game runtime:** `simple-game.js`
 - **Non-canonical reference runtime:** `game.js` (kept for development/reference only)
 
-## Phase A/B Baseline (already completed)
+## Phase A/B/C Summary (complete)
 - Runtime path unified to `index.html` → `simple-game.js`.
-- Alternate HTML entrypoints isolated in `archive/`.
-- Deployment docs aligned to canonical runtime.
+- World progression fixed to terminate cleanly at `WIN` after World 3.
+- Story skip flow corrected (intro vs world-intro behavior).
+- Gameplay simulation constrained to `PLAYING` state only.
+- Restart/checkpoint flow stabilized.
+- Added deterministic sanity harness: `scripts/phase-c-sanity.js`.
 
-## Phase C Completed (feature completion + progression integrity)
+## Phase D Polish Checklist (targeted pass)
 
-### 1) World progression and win-path tightened (`simple-game.js`)
-- Added explicit world cap: `totalWorlds = 3`.
-- Fixed progression so World 3 completion ends in **`WIN`** state (no silent loop back to World 1).
-- Moved level-advance trigger out of rendering path and into key-driven gameplay flow.
-- Added terminal state restart controls: `R`, `Enter`, or `Space` from `GAME_OVER` / `WIN`.
+### ✅ 1) Touch-first/mobile controls for PAUSED/GAME_OVER/WIN
+Implemented in `simple-game.js` mobile control system:
+- Added always-available **MENU** action button while playing/paused.
+- Added touch action stack for non-playing flows:
+  - **RESUME** (PAUSED)
+  - **PLAY AGAIN** (PAUSED/GAME_OVER/WIN)
+  - **MAIN MENU** (PAUSED/GAME_OVER/WIN)
+- Added `goToMainMenu()` flow to return to intro splash cleanly.
+- Terminal overlays now explicitly mention touch restart action.
 
-### 2) Coherent gameplay state flow (restart/checkpoint/lose-win)
-- `update()` now only simulates gameplay while `gameState === 'PLAYING'`.
-  - Prevents enemy/player updates during `PAUSED`, `GAME_OVER`, and `WIN`.
-- Removed duplicate game-loop risk by stopping `resumeGame()` from calling `gameLoop()` again.
-- Added structured overlays for:
-  - `PAUSED`
-  - `GAME_OVER`
-  - `WIN`
-- Added world-start checkpoint model:
-  - `checkpoint` set at each world initialization.
-  - On non-lethal hit, Papa Sandy respawns at checkpoint with reduced health.
-- Added explicit `restartGame()` reset path (world, score, health, level flags, keys).
+### ✅ 2) HUD overlap/readability issues resolved
+- Fixed overlap bug where `Health` and `Stars` were both drawn at y=90.
+- Rebuilt HUD into layered readable panel:
+  - dedicated rows for World/Score/Health/Stars
+  - stronger contrast via stroke+fill text
+  - subtle dark backing panel for visibility across all worlds
 
-### 3) Story/world-intro continuity
-- Added `handleStorySkip()` so skipping story behaves correctly:
-  - Intro splash starts a fresh run.
-  - Mid-run world intro splash resumes current run without resetting back to World 1.
+### ✅ 3) Low-risk accessibility/performance polish
+- Added low-clutter toggle (`V` key and mobile **FX** button):
+  - `reducedEffects` mode suppresses decorative background elements.
+  - keeps gameplay logic unchanged while reducing visual noise.
+- Kept this opt-in and low-risk (no progression or collision behavior changes).
 
-### 4) Tire/system consistency fix
-- `initializeWorld()` now always calls `initializeTires()` so world tire mechanics are present as intended.
+### ✅ 4) Canonical runtime preserved
+- No entrypoint changes: still `index.html` + `simple-game.js`.
 
-### 5) Minimal non-flaky scripted sanity checks
-- Added `scripts/phase-c-sanity.js` (Node VM harness with lightweight DOM/canvas stubs).
-- Script verifies key progression/flow invariants:
-  - Intro → World 1 start
-  - World 1 → World 2 intro
-  - World 2 → World 3 intro
-  - World 3 completion → `WIN` (no world loop)
-  - Restart from terminal state
-  - Checkpoint respawn on non-lethal enemy hit
+### ✅ 5) STATUS.md updated with exact Phase D checklist + gaps
+- This document now reflects completion status and remaining non-blocking gaps.
 
-## Validation Run (Phase C)
+### ✅ 6) Validation reruns required for this phase
+- Re-ran `node scripts/phase-c-sanity.js`.
+- Re-ran syntax checks.
+
+### ✅ 7) Commit prepared
+- Phase D polish committed with touch/menu/HUD/accessibility updates.
+
+## Validation Run (Phase D)
 - `node scripts/phase-c-sanity.js` ✅
 - `node --check simple-game.js` ✅
 - `node --check game.js` ✅
 - `node --check performance-monitor.js` ✅
 - `node --check levels/level1-1.js` ✅
 
-## Remaining Phase D Polish Items
-1. Add an in-game explicit “Play Again” / “Main Menu” button UI for touch-first flows (currently keyboard restart shortcuts only).
-2. Tighten HUD readability (health/stars text overlap at y=90).
-3. Optional: unify story pacing/prompts between intro and world transitions.
-4. Optional: add CI hook to run `scripts/phase-c-sanity.js` + syntax checks on PRs.
-5. Optional: decide long-term fate of `game.js` to reduce maintenance split.
+## Final Gaps / Follow-ups (non-blocking)
+1. Optional CI wiring for sanity + syntax checks on PR/push.
+2. Optional future decision on `game.js` archival/removal to reduce maintenance split.
+3. Optional UX polish for story pacing consistency between intro and world transitions.
+
+## Release Readiness (Phase D scope)
+- **Ready for release within current scope.**
+- Core play loop, progression, terminal states, touch-first restart/menu flows, and HUD readability are all in-place on canonical runtime.
