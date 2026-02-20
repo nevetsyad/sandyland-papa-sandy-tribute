@@ -1257,4 +1257,4 @@ A tribute to Papa Sandy's legacy.`
     showWorldIntro() {
         this.startStory('WORLD_' + this.currentWorld);
     }
-}}
+}
