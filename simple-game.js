@@ -1257,29 +1257,67 @@ A tribute to Papa Sandy's legacy.`
             this.drawDrVette();
         }
         
-        // Draw enemies
+        // Draw enemies (animated)
+        const animTick = this.papaSandy.animationTimer;
         for (let enemy of this.enemies) {
             if (!enemy.alive) continue;
-            
+
             if (enemy.type === 'crab') {
+                const clawFrame = Math.floor(animTick / 10) % 2;
+                const legFrame = Math.floor(animTick / 8) % 2;
+                const crabY = enemy.y + (legFrame ? 1 : 0);
+
+                // body
                 this.ctx.fillStyle = enemy.color;
-                this.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-            } else if (enemy.type === 'coconut') {
-                this.ctx.fillStyle = enemy.color;
-                this.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-                // Draw coconut texture
-                this.ctx.fillStyle = '#654321';
-                this.ctx.fillRect(enemy.x + 4, enemy.y + 4, 16, 16);
-            } else if (enemy.type === 'minion') {
-                this.ctx.fillStyle = enemy.color;
-                this.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
-                // Draw minion face
+                this.ctx.fillRect(enemy.x + 2, crabY + 4, enemy.width - 4, enemy.height - 6);
+                // claws
+                this.ctx.fillRect(enemy.x - 2, crabY + (clawFrame ? 2 : 6), 6, 4);
+                this.ctx.fillRect(enemy.x + enemy.width - 4, crabY + (clawFrame ? 2 : 6), 6, 4);
+                // eyes
                 this.ctx.fillStyle = '#FFFFFF';
-                this.ctx.fillRect(enemy.x + 4, enemy.y + 4, 8, 8);
-                this.ctx.fillRect(enemy.x + 20, enemy.y + 4, 8, 8);
+                this.ctx.fillRect(enemy.x + 6, crabY, 4, 4);
+                this.ctx.fillRect(enemy.x + enemy.width - 10, crabY, 4, 4);
+            } else if (enemy.type === 'coconut') {
+                const wobble = enemy.falling ? 0 : Math.sin(animTick / 10) * 1.5;
+                const cx = enemy.x + enemy.width / 2 + wobble;
+                const cy = enemy.y + enemy.height / 2;
+                const r = enemy.width / 2;
+
+                this.ctx.beginPath();
+                this.ctx.fillStyle = enemy.color;
+                this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // shell texture lines
+                this.ctx.strokeStyle = '#654321';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(cx, cy, r - 4, 0.3, Math.PI - 0.3);
+                this.ctx.stroke();
+                this.ctx.beginPath();
+                this.ctx.arc(cx, cy, r - 7, Math.PI + 0.3, (Math.PI * 2) - 0.3);
+                this.ctx.stroke();
+            } else if (enemy.type === 'minion') {
+                const floatY = Math.sin(animTick / 12 + enemy.x * 0.02) * 2;
+                const blink = Math.floor(animTick / 24) % 7 === 0;
+                const my = enemy.y + floatY;
+
+                this.ctx.fillStyle = enemy.color;
+                this.ctx.fillRect(enemy.x, my, enemy.width, enemy.height);
+                // outline aura
+                this.ctx.strokeStyle = '#8a5cff';
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(enemy.x - 1, my - 1, enemy.width + 2, enemy.height + 2);
+
+                // face
+                this.ctx.fillStyle = '#FFFFFF';
+                this.ctx.fillRect(enemy.x + 5, my + 5, 7, blink ? 2 : 7);
+                this.ctx.fillRect(enemy.x + 20, my + 5, 7, blink ? 2 : 7);
                 this.ctx.fillStyle = '#000000';
-                this.ctx.fillRect(enemy.x + 6, enemy.y + 6, 4, 4);
-                this.ctx.fillRect(enemy.x + 22, enemy.y + 6, 4, 4);
+                if (!blink) {
+                    this.ctx.fillRect(enemy.x + 7, my + 7, 3, 3);
+                    this.ctx.fillRect(enemy.x + 22, my + 7, 3, 3);
+                }
             }
         }
         
@@ -1412,6 +1450,24 @@ A tribute to Papa Sandy's legacy.`
         } else if (this.gameState === 'WIN') {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            // Celebration confetti animation
+            const t = Date.now() / 1000;
+            const confettiColors = ['#FFD700', '#FF6F61', '#4DD0E1', '#81C784', '#BA68C8'];
+            for (let i = 0; i < 36; i++) {
+                const x = (i * 47 + (t * 90)) % (this.canvas.width + 40) - 20;
+                const y = ((i * 83 + (t * 140)) % (this.canvas.height + 60)) - 30;
+                const w = 6 + (i % 4);
+                const h = 10 + (i % 3);
+                const angle = (t * 4 + i) % (Math.PI * 2);
+                this.ctx.save();
+                this.ctx.translate(x, y);
+                this.ctx.rotate(angle);
+                this.ctx.fillStyle = confettiColors[i % confettiColors.length];
+                this.ctx.fillRect(-w / 2, -h / 2, w, h);
+                this.ctx.restore();
+            }
+
             this.ctx.fillStyle = '#FFD700';
             this.ctx.font = '34px Courier New';
             this.ctx.textAlign = 'center';
