@@ -1,5 +1,22 @@
 # Sandyland Status Audit (2026-02-20)
 
+## Character Visual Update (Papa Sandy old-man pixel sprite)
+- Replaced placeholder yellow player rectangle in `simple-game.js` with an 8-bit style pixel-art "little old man" render for Papa Sandy.
+- Added animation states with runtime switching based on existing movement physics:
+  - `idle`
+  - `run` (2-frame cycle)
+  - `jump` (single airborne pose)
+- Added left/right facing support by mirroring sprite draw transform from existing `direction` value.
+- Preserved gameplay/hitbox behavior by keeping all collision and dimensions unchanged (`width: 32`, `height: 48`); only draw path changed.
+- Kept invulnerability readability by overlaying a pink flash tint on sprite blink frames.
+
+## Validation Run (Character Update)
+- `node --check simple-game.js` ✅
+- `node --check game.js` ✅
+- `node --check performance-monitor.js` ✅
+- `node --check levels/level1-1.js` ✅
+- `node scripts/phase-c-sanity.js` ✅
+
 ## Canonical Runtime
 - **Release entrypoint:** `index.html`
 - **Release game runtime:** `simple-game.js`
