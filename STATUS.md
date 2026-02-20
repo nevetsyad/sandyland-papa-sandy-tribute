@@ -29,5 +29,5 @@
 
 ## Next Recommended Steps
 - Decide whether `game.js` should eventually replace `simple-game.js` or remain a long-term alternate branch.
-- Add CI script to run `node --check` automatically on active runtime files.
-- Run the smoke checklist against GitHub Pages after each deploy.
+- Expand CI beyond syntax checks (e.g., lint/test harness) once runtime is stable.
+- Continue running `RELEASE_SMOKE_TEST.md` against GitHub Pages after each deploy.

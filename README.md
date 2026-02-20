@@ -70,6 +70,15 @@ sandyland/
 - **Deployment rule:** publish from `index.html` + `simple-game.js`; do not use files in `archive/` for production
 
 
+## ✅ **Release Verification Flow**
+
+Use this lightweight release gate for every deploy:
+1. Run local syntax checks on active JS runtime files.
+2. Deploy to GitHub Pages (CI now enforces the same syntax checks).
+3. Run the post-deploy verification checklist, including URL capture, console sanity, and rollback notes.
+
+See [RELEASE_SMOKE_TEST.md](RELEASE_SMOKE_TEST.md) for the exact checklist.
+
 ## 🚀 **Quick Start**
 
 ### **Local Play**

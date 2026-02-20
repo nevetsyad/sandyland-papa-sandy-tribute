@@ -87,6 +87,16 @@ https://your-github-username.github.io/
 
 **Note**: It may take 1-5 minutes for GitHub Pages to deploy your site.
 
+## ✅ **Step 5: Run Deployment Verification (Required)**
+
+After each deploy:
+1. Copy the deployed URL from the GitHub Actions deploy job output.
+2. Open that URL and verify console sanity (no blocking runtime errors).
+3. Run gameplay smoke checks and record results.
+4. If checks fail, perform a revert-based rollback and redeploy.
+
+Use: [RELEASE_SMOKE_TEST.md](RELEASE_SMOKE_TEST.md)
+
 ## 🎮 **Game Features Confirmed Working**
 
 ✅ **8-bit NES Aesthetic**: Authentic pixel-perfect rendering

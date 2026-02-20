@@ -4,10 +4,34 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
+  syntax-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Syntax check active runtime JS files
+      run: |
+        node --check simple-game.js
+        node --check game.js
+        node --check performance-monitor.js
+        node --check levels/level1-1.js
+
   deploy:
+    if: github.event_name != 'pull_request'
+    needs: syntax-check
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,15 +45,15 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      
+
     - name: Setup Pages
       uses: actions/configure-pages@v4
-      
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
         path: '.'
-        
+
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
