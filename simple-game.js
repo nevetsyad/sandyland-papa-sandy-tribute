@@ -1673,13 +1673,21 @@ A tribute to Papa Sandy's legacy.`
         
         const storyLines = this.stories[this.storyMode].split('\n');
         const lineHeight = 25;
-        const startY = this.canvas.height + 20;
-        
+        // Start just below the title area so text is visible immediately while still scrolling upward.
+        const startY = this.canvas.height - 10;
+        let visibleLines = 0;
+
         for (let i = 0; i < storyLines.length; i++) {
             const lineY = startY + (i * lineHeight) - this.storyScrollY;
             if (lineY > 60 && lineY < this.canvas.height - 40) {
                 this.ctx.fillText(storyLines[i], 50, lineY);
+                visibleLines++;
             }
+        }
+
+        // Safety fallback: if nothing is visible yet, show the first story line near the bottom.
+        if (visibleLines === 0 && storyLines.length > 0) {
+            this.ctx.fillText(storyLines[0], 50, this.canvas.height - 70);
         }
         
         // Draw progress indicator
