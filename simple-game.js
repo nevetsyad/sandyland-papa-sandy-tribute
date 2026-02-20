@@ -26,7 +26,7 @@ class SandylandGame {
         this.storyMode = 'LEGEND'; // INTRO, LEGEND, WORLD_1, WORLD_2, WORLD_3, VICTORY
         this.storyText = '';
         this.storyTimer = 0;
-        this.storySpeed = 0.45;
+        this.storySpeed = 0.62;
         this.storyScrollY = 0;
         this.storyMaxScroll = 0;
         this.storyAutoScroll = true;
@@ -34,22 +34,23 @@ class SandylandGame {
         
         // Story content as scrolling text
         this.stories = {
-            INTRO: `PAPA SANDY: RETIRED TIRE SALESMAN
+            INTRO: `PAPA SANDY VS. DR.VETTE
 
-Once upon a time, in sunny Florida...
-Papa Sandy lived a peaceful retirement.
-His pride and joy? His beautiful white Corvette!
+Papa Sandy finally retired in peace...
+until his ex-wife, Dr.vette, stole his white Corvette
+and hid it behind her minions and traps.
 
-But trouble was brewing...
-His ex-wife Dr.vette still held a grudge.
-She was jealous of his happiness and success.
+Your mission:
+Rescue the Corvette by clearing all 3 worlds
+and defeating Dr.vette in the final showdown.
 
-One day, Dr.vette stole his beloved Corvette!
-She hid it in her veterinary clinic fortress.
+How to win each world:
+⭐ Collect 2 stars to unlock the next area
+🛞 Use tires: push (B) or throw (T)
+🦀 Enemies (crab/minion/coconut): avoid, stomp, or hit with tires
 
-Now, Papa Sandy must rescue his car!
-Using his tire-rolling skills from his salesman days,
-he embarks on an epic adventure across three worlds!
+Goal:
+Reach World 3, beat Dr.vette, and drive the Corvette home.
 
 Press SPACE to continue!`,
 
