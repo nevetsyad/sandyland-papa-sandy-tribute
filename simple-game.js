@@ -876,10 +876,6 @@ A tribute to Papa Sandy's legacy.`
                 this.papaSandy.invulnerable = true;
                 this.papaSandy.invulnerableTimer = 120; // 2 seconds of invulnerability
 
-                // Knockback Papa Sandy
-                this.papaSandy.velocityX = this.papaSandy.direction * -3;
-                this.papaSandy.velocityY = -5;
-
                 // Check if Papa Sandy died
                 if (this.papaSandy.health <= 0) {
                     this.gameState = 'GAME_OVER';
@@ -970,6 +966,156 @@ A tribute to Papa Sandy's legacy.`
             }
         }
     }
+
+    getPapaSandySpriteFrame() {
+        const idleFrame = [
+            '....HHHH....',
+            '...HHHHHH...',
+            '..HHHHHHHH..',
+            '..BBBBBBBB..',
+            '...SSSSSS...',
+            '..SSEESSSS..',
+            '..SSSSSSSS..',
+            '...WWWWWW...',
+            '..WWWWWWWW..',
+            '..WWWWWWWW..',
+            '...CCCCCC...',
+            '..CCCCCCCC..',
+            '..CCCCCCCC..',
+            '..CCCCCCCC..',
+            '..CCCPPPCC..',
+            '..CCCPPPCC..',
+            '...PP..PP...',
+            '...PP..PP...',
+            '...KK..KK...',
+            '..KKK..KKK..'
+        ];
+
+        const runFrameA = [
+            '....HHHH....',
+            '...HHHHHH...',
+            '..HHHHHHHH..',
+            '..BBBBBBBB..',
+            '...SSSSSS...',
+            '..SSEESSSS..',
+            '..SSSSSSSS..',
+            '...WWWWWW...',
+            '..WWWWWWWW..',
+            '..WWWWWWWW..',
+            '...CCCCCC...',
+            '..CCCCCCCC..',
+            '..CCCCCCCC..',
+            '..CCCCCCCC..',
+            '..CCCPPPCC..',
+            '..CCCPPPCC..',
+            '..PPP..PP...',
+            '...PP...PP..',
+            '..KKK...KK..',
+            '.KKK.....KK.'
+        ];
+
+        const runFrameB = [
+            '....HHHH....',
+            '...HHHHHH...',
+            '..HHHHHHHH..',
+            '..BBBBBBBB..',
+            '...SSSSSS...',
+            '..SSEESSSS..',
+            '..SSSSSSSS..',
+            '...WWWWWW...',
+            '..WWWWWWWW..',
+            '..WWWWWWWW..',
+            '...CCCCCC...',
+            '..CCCCCCCC..',
+            '..CCCCCCCC..',
+            '..CCCCCCCC..',
+            '..CCCPPPCC..',
+            '..CCCPPPCC..',
+            '...PP..PPP..',
+            '..PP...PP...',
+            '..KK...KKK..',
+            '.KK.....KKK.'
+        ];
+
+        const jumpFrame = [
+            '....HHHH....',
+            '...HHHHHH...',
+            '..HHHHHHHH..',
+            '..BBBBBBBB..',
+            '...SSSSSS...',
+            '..SSEESSSS..',
+            '..SSSSSSSS..',
+            '...WWWWWW...',
+            '..WWWWWWWW..',
+            '..WWWWWWWW..',
+            '...CCCCCC...',
+            '..CCCCCCCC..',
+            '..CCCCCCCC..',
+            '..CCCCCCCC..',
+            '..CCCPPPCC..',
+            '..CCCPPPCC..',
+            '...PPPPPP...',
+            '..PPPPPPPP..',
+            '...KK..KK...',
+            '..KKK..KKK..'
+        ];
+
+        if (this.papaSandy.animationState === 'jump') {
+            return jumpFrame;
+        }
+
+        if (this.papaSandy.animationState === 'run') {
+            const runIndex = Math.floor(this.papaSandy.animationTimer / 7) % 2;
+            return runIndex === 0 ? runFrameA : runFrameB;
+        }
+
+        return idleFrame;
+    }
+
+    drawPapaSandy() {
+        const palette = {
+            H: '#6E4D2E',
+            B: '#9C6B3F',
+            S: '#E2B58F',
+            E: '#1B1B1B',
+            W: '#F2F2F2',
+            C: '#3E6FB8',
+            P: '#4F6480',
+            K: '#1F1F1F'
+        };
+
+        const sprite = this.getPapaSandySpriteFrame();
+        const pixelSize = 2;
+        const spriteWidth = sprite[0].length * pixelSize;
+        const spriteHeight = sprite.length * pixelSize;
+        const drawX = Math.floor((this.papaSandy.width - spriteWidth) / 2);
+        const drawY = this.papaSandy.y + (this.papaSandy.height - spriteHeight);
+
+        this.ctx.save();
+        this.ctx.translate(this.papaSandy.x, 0);
+
+        if (this.papaSandy.direction === -1) {
+            this.ctx.translate(this.papaSandy.width, 0);
+            this.ctx.scale(-1, 1);
+        }
+
+        for (let y = 0; y < sprite.length; y++) {
+            const row = sprite[y];
+            for (let x = 0; x < row.length; x++) {
+                const pixel = row[x];
+                if (pixel === '.') continue;
+                this.ctx.fillStyle = palette[pixel];
+                this.ctx.fillRect(drawX + x * pixelSize, drawY + y * pixelSize, pixelSize, pixelSize);
+            }
+        }
+
+        if (this.papaSandy.invulnerable && Math.floor(this.papaSandy.invulnerableTimer / 10) % 2) {
+            this.ctx.fillStyle = 'rgba(255, 105, 180, 0.35)';
+            this.ctx.fillRect(drawX, drawY, spriteWidth, spriteHeight);
+        }
+
+        this.ctx.restore();
+    }
     
     draw() {
         // Draw story mode first
@@ -1026,15 +1172,8 @@ A tribute to Papa Sandy's legacy.`
             }
         }
         
-        // Draw Papa Sandy
-        if (this.papaSandy.invulnerable && Math.floor(this.papaSandy.invulnerableTimer / 10) % 2) {
-            // Flashing effect when invulnerable
-            this.ctx.fillStyle = '#FF69B4';
-        } else {
-            // Normal Papa Sandy appearance
-            this.ctx.fillStyle = '#FFD700';
-        }
-        this.ctx.fillRect(this.papaSandy.x, this.papaSandy.y, this.papaSandy.width, this.papaSandy.height);
+        // Draw Papa Sandy (pixel-art sprite with simple animation states)
+        this.drawPapaSandy();
         
         // Draw enemies
         for (let enemy of this.enemies) {
@@ -1329,6 +1468,8 @@ A tribute to Papa Sandy's legacy.`
         this.papaSandy.onGround = true;
         this.papaSandy.invulnerable = false;
         this.papaSandy.invulnerableTimer = 0;
+        this.papaSandy.animationTimer = 0;
+        this.papaSandy.animationState = 'idle';
         this.checkpoint = {
             x: this.papaSandy.x,
             y: this.papaSandy.y,
@@ -1337,11 +1478,19 @@ A tribute to Papa Sandy's legacy.`
     }
 
     respawnAtCheckpoint() {
-        this.papaSandy.x = this.checkpoint.x;
-        this.papaSandy.y = this.checkpoint.y;
+        // Always respawn safely on the left-side ground start for the current world
+        this.papaSandy.x = 100;
+        this.papaSandy.y = this.groundY - this.papaSandy.height;
         this.papaSandy.velocityX = 0;
         this.papaSandy.velocityY = 0;
         this.papaSandy.onGround = true;
+        this.papaSandy.animationState = 'idle';
+
+        this.checkpoint = {
+            x: this.papaSandy.x,
+            y: this.papaSandy.y,
+            world: this.currentWorld
+        };
     }
 
     restartGame() {
