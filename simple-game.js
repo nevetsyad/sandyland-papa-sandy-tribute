@@ -2106,17 +2106,33 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.font = '18px Courier New';
         this.ctx.textAlign = 'left';
 
-        // Sprite/icon key
+        // Sprite/icon key (drawn to match in-game visuals)
+        // Papa Sandy mini-sprite: grey hair + face + white shirt + blue shorts
+        this.ctx.fillStyle = '#9AA0A6';
+        this.ctx.fillRect(70, 124, 14, 6);
+        this.ctx.fillStyle = '#E2B58F';
+        this.ctx.fillRect(72, 130, 10, 6);
         this.ctx.fillStyle = '#F2F2F2';
-        this.ctx.fillRect(70, 128, 16, 24);
+        this.ctx.fillRect(70, 136, 14, 8);
+        this.ctx.fillStyle = '#3E6FB8';
+        this.ctx.fillRect(70, 144, 14, 8);
+        this.ctx.fillStyle = '#1F1F1F';
+        this.ctx.fillRect(71, 152, 4, 3);
+        this.ctx.fillRect(79, 152, 4, 3);
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.fillText('Papa Sandy (you)', 100, 145);
 
+        // Star power-up (same star glyph used in HUD)
         this.ctx.fillStyle = '#FFD700';
         this.ctx.fillRect(70, 168, 18, 18);
         this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '16px Courier New';
+        this.ctx.fillText('⭐', 74, 182);
+        this.ctx.font = '18px Courier New';
+        this.ctx.fillStyle = '#FFFFFF';
         this.ctx.fillText('Star power-up (collect 2 per world)', 100, 183);
 
+        // Tire icon (matches in-game tire/rim)
         this.ctx.beginPath();
         this.ctx.fillStyle = '#111111';
         this.ctx.arc(82, 214, 12, 0, Math.PI * 2);
@@ -2125,25 +2141,58 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.fillStyle = '#9E9E9E';
         this.ctx.arc(82, 214, 5, 0, Math.PI * 2);
         this.ctx.fill();
+        this.ctx.strokeStyle = '#555555';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(82, 214, 10, 0, Math.PI * 2);
+        this.ctx.stroke();
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillText('Tire: T throw', 100, 220);
+        this.ctx.fillText('Tire: push (B) or throw (T)', 100, 220);
 
-        this.ctx.fillStyle = '#FF6347';
-        this.ctx.fillRect(70, 240, 24, 16);
-        this.ctx.fillStyle = '#4B0082';
-        this.ctx.fillRect(98, 236, 20, 20);
+        // Enemy strip: crab body/claws + minion aura block + coconut sphere
+        this.ctx.fillStyle = '#FF6347'; // crab body
+        this.ctx.fillRect(70, 242, 18, 10);
+        this.ctx.fillRect(67, 244, 5, 3);
+        this.ctx.fillRect(86, 244, 5, 3);
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.fillRect(74, 239, 3, 3);
+        this.ctx.fillRect(81, 239, 3, 3);
+
+        this.ctx.fillStyle = '#4B0082'; // minion
+        this.ctx.fillRect(98, 238, 16, 16);
+        this.ctx.strokeStyle = '#8a5cff';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(97, 237, 18, 18);
+
+        this.ctx.beginPath(); // coconut
         this.ctx.fillStyle = '#8B4513';
-        this.ctx.fillRect(124, 240, 16, 16);
+        this.ctx.arc(131, 246, 8, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#654321';
+        this.ctx.beginPath();
+        this.ctx.arc(131, 246, 5, 0.4, Math.PI - 0.4);
+        this.ctx.stroke();
+
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.fillText('Enemies: crab / minion / coconut', 150, 253);
 
+        // Final cue icon row: Corvette + Dr.vette silhouette
         this.ctx.fillStyle = '#FDFDFD';
-        this.ctx.fillRect(70, 280, 72, 16);
-        this.ctx.fillRect(86, 268, 32, 12);
+        this.ctx.fillRect(70, 282, 58, 12);
+        this.ctx.fillRect(86, 272, 26, 10);
+        this.ctx.fillStyle = '#B0C4DE';
+        this.ctx.fillRect(90, 274, 18, 6);
+        this.ctx.fillStyle = '#1E1E1E';
+        this.ctx.fillRect(76, 293, 10, 8);
+        this.ctx.fillRect(109, 293, 10, 8);
+
+        this.ctx.fillStyle = '#9AA0A6'; // Dr.vette hair
+        this.ctx.fillRect(142, 268, 10, 5);
         this.ctx.fillStyle = '#EBC9A8';
-        this.ctx.fillRect(154, 264, 14, 12);
+        this.ctx.fillRect(143, 273, 8, 6);
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillRect(150, 276, 22, 26);
+        this.ctx.fillRect(141, 279, 12, 16);
+
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.fillText('Final cue: White Corvette + Dr.vette boss', 180, 290);
 
