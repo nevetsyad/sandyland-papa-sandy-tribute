@@ -1118,7 +1118,7 @@ A tribute to Papa Sandy's legacy.`
 
     drawPapaSandy() {
         const palette = {
-            H: '#6E4D2E',
+            H: '#9AA0A6',
             B: '#9C6B3F',
             S: '#E2B58F',
             E: '#1B1B1B',
