@@ -62,7 +62,7 @@ Papa Sandy: You
 🛞 Tire: E to push or throw (auto-picks best)
 🐴 Horse/Gates: E to mount/dismount/interact (World 2)
 Crab/Minion/Coconut: avoid or defeat
-Power-ups: stars boost score
+Power-ups: bullions boost score
 White Corvette + Dr.vette: final boss cue
 
 Controls:
