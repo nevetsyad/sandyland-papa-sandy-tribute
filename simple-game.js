@@ -41,11 +41,11 @@ until his ex-wife, Dr.vette, stole his white Corvette
 and hid it behind her minions and traps.
 
 Your mission:
-Rescue the Corvette by clearing all 3 worlds
-and defeating Dr.vette in the final showdown.
+Rescue the Corvette and find your missing gold bullion
+by clearing all 3 worlds and defeating Dr.vette.
 
 How to win each world:
-⭐ Collect 2 stars to unlock the next area
+🪙 Collect 2 gold bullions to unlock the next area
 🛞 Use tires: push (B) or throw (T)
 🐴 Use E for action: throw tire, mount/dismount horse, and nearby interact
 🦀 Enemies (crab/minion/coconut): avoid, stomp, or hit with tires
@@ -58,7 +58,7 @@ Press SPACE to continue!`,
             LEGEND: `SPRITE KEY
 
 Papa Sandy: You
-⭐ Star: collect 2 to clear worlds
+🪙 Gold bullion: collect 2 to clear worlds
 🛞 Tire: push (B), throw (T), or quick action (E)
 🐴 Horse/Gates: E to mount/dismount/interact (World 2)
 Crab/Minion/Coconut: avoid or defeat
@@ -1412,7 +1412,7 @@ A tribute to Papa Sandy's legacy.`
                 this.ctx.fillStyle = '#FFFFFF';
                 this.ctx.font = '16px Courier New';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText('⭐', powerUp.x + powerUp.width/2, powerUp.y + powerUp.height - 4);
+                this.ctx.fillText('🪙', powerUp.x + powerUp.width/2, powerUp.y + powerUp.height - 4);
             }
         }
         
@@ -2350,15 +2350,15 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.fillText('Papa Sandy (you)', 100, 145);
 
-        // Star power-up (same star glyph used in HUD)
+        // Gold bullion power-up (gold ingot)
         this.ctx.fillStyle = '#FFD700';
         this.ctx.fillRect(70, 168, 18, 18);
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = '16px Courier New';
-        this.ctx.fillText('⭐', 74, 182);
+        this.ctx.fillText('🪙', 74, 182);
         this.ctx.font = '18px Courier New';
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillText('Star power-up (collect 2 per world)', 100, 183);
+        this.ctx.fillText('Gold bullion (collect 2 per world)', 100, 183);
 
         // Tire icon (matches in-game tire/rim)
         this.ctx.beginPath();
