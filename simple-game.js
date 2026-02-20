@@ -2062,9 +2062,9 @@ A tribute to Papa Sandy's legacy.`
         });
 
         // Tire smoke puffs
-        const puffBaseX = carX + 132;
+        const puffBaseX = carX - 20;
         for (let i = 0; i < 4; i++) {
-            const px = puffBaseX + i * 11 + Math.sin((t + i * 7) * 0.11) * 2;
+            const px = puffBaseX - i * 11 + Math.sin((t + i * 7) * 0.11) * 2;
             const py = wheelY - 5 - i * 5 - ((t * 0.3 + i * 5) % 12);
             const r = 4 + i * 1.3;
             this.ctx.beginPath();
