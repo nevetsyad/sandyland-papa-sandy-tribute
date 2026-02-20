@@ -30,6 +30,7 @@ class SandylandGame {
         this.storyScrollY = 0;
         this.storyMaxScroll = 0;
         this.storyAutoScroll = true;
+        this.splashSkipLocked = false;
         
         // Story content as scrolling text
         this.stories = {
@@ -1869,6 +1870,7 @@ A tribute to Papa Sandy's legacy.`
         this.storyTimer = 0;
         this.storyScrollY = 0;
         this.storyAutoScroll = true;
+        this.splashSkipLocked = true;
         this.gameState = 'SPLASH';
         this.initializeBackgroundMusic();
         
@@ -1883,9 +1885,19 @@ A tribute to Papa Sandy's legacy.`
     updateStory() {
         if (this.gameState !== 'SPLASH') return;
         
+        const anyKeyPressed = this.keys['Space'] || this.keys['Enter'] || this.keys['Escape'] ||
+            Object.values(this.keys).some(key => key === true);
+
+        // Debounce skip so a held key from previous splash screen doesn't instantly skip the next one
+        if (this.splashSkipLocked) {
+            if (!anyKeyPressed) {
+                this.splashSkipLocked = false;
+            }
+            return;
+        }
+
         // Handle skip with any key
-        if (this.keys['Space'] || this.keys['Enter'] || this.keys['Escape'] || 
-            Object.values(this.keys).some(key => key === true)) {
+        if (anyKeyPressed) {
             this.handleStorySkip();
             return;
         }
