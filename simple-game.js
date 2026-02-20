@@ -1282,25 +1282,31 @@ A tribute to Papa Sandy's legacy.`
             }
         }
         
-        // Draw tires
+        // Draw tires (rounded, black, easier to identify)
         for (let tire of this.tires) {
-            if (tire.pushed) {
-                // Draw rolling tire
-                this.ctx.fillStyle = tire.color;
-                this.ctx.fillRect(tire.x, tire.y, tire.width, tire.height);
-                // Draw tire treads
-                this.ctx.fillStyle = '#666666';
-                for (let i = 0; i < 3; i++) {
-                    this.ctx.fillRect(tire.x + 4, tire.y + 8 + i * 8, tire.width - 8, 2);
-                }
-            } else {
-                // Draw stationary tire
-                this.ctx.fillStyle = tire.color;
-                this.ctx.fillRect(tire.x, tire.y, tire.width, tire.height);
-                // Draw tire rim
-                this.ctx.fillStyle = '#999999';
-                this.ctx.fillRect(tire.x + 6, tire.y + 6, tire.width - 12, tire.height - 12);
-            }
+            const cx = tire.x + tire.width / 2;
+            const cy = tire.y + tire.height / 2;
+            const outerR = Math.min(tire.width, tire.height) / 2;
+            const innerR = outerR * 0.45;
+
+            // Outer tire
+            this.ctx.beginPath();
+            this.ctx.fillStyle = '#111111';
+            this.ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Inner rim
+            this.ctx.beginPath();
+            this.ctx.fillStyle = '#9E9E9E';
+            this.ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Tread accents
+            this.ctx.strokeStyle = tire.pushed ? '#7A7A7A' : '#555555';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, outerR - 2, 0, Math.PI * 2);
+            this.ctx.stroke();
         }
         
         // Draw power-ups
@@ -1461,7 +1467,7 @@ A tribute to Papa Sandy's legacy.`
                         pushed: false,
                         velocityX: 0,
                         pushTime: 0,
-                        color: '#333333'
+                        color: '#111111'
                     },
                     {
                         type: 'tire',
@@ -1472,7 +1478,7 @@ A tribute to Papa Sandy's legacy.`
                         pushed: false,
                         velocityX: 0,
                         pushTime: 0,
-                        color: '#333333'
+                        color: '#111111'
                     }
                 ];
                 break;
@@ -1487,7 +1493,7 @@ A tribute to Papa Sandy's legacy.`
                         pushed: false,
                         velocityX: 0,
                         pushTime: 0,
-                        color: '#654321'
+                        color: '#111111'
                     },
                     {
                         type: 'tire',
@@ -1498,7 +1504,7 @@ A tribute to Papa Sandy's legacy.`
                         pushed: false,
                         velocityX: 0,
                         pushTime: 0,
-                        color: '#654321'
+                        color: '#111111'
                     },
                     {
                         type: 'tire',
@@ -1509,7 +1515,7 @@ A tribute to Papa Sandy's legacy.`
                         pushed: false,
                         velocityX: 0,
                         pushTime: 0,
-                        color: '#654321'
+                        color: '#111111'
                     }
                 ];
                 break;
@@ -1524,7 +1530,7 @@ A tribute to Papa Sandy's legacy.`
                         pushed: false,
                         velocityX: 0,
                         pushTime: 0,
-                        color: '#8B4513'
+                        color: '#111111'
                     },
                     {
                         type: 'tire',
@@ -1535,7 +1541,7 @@ A tribute to Papa Sandy's legacy.`
                         pushed: false,
                         velocityX: 0,
                         pushTime: 0,
-                        color: '#8B4513'
+                        color: '#111111'
                     }
                 ];
                 break;
@@ -1980,10 +1986,14 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.fillText('Star power-up (collect 2 per world)', 100, 183);
 
-        this.ctx.fillStyle = '#333333';
-        this.ctx.fillRect(70, 202, 24, 24);
-        this.ctx.fillStyle = '#999999';
-        this.ctx.fillRect(76, 208, 12, 12);
+        this.ctx.beginPath();
+        this.ctx.fillStyle = '#111111';
+        this.ctx.arc(82, 214, 12, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.beginPath();
+        this.ctx.fillStyle = '#9E9E9E';
+        this.ctx.arc(82, 214, 5, 0, Math.PI * 2);
+        this.ctx.fill();
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.fillText('Tire: B push / T throw', 100, 220);
 
