@@ -581,10 +581,7 @@ A tribute to Papa Sandy's legacy.`
                 this.musicMuted = false;
             }
             
-            // Handle tire actions
-            if (e.code === 'KeyB' && this.gameState === 'PLAYING') {
-                this.pushNearestTire();
-            }
+            // Handle tire throwing
             if (e.code === 'KeyT' && this.gameState === 'PLAYING') {
                 this.throwNearestTire();
             }
@@ -655,7 +652,6 @@ A tribute to Papa Sandy's legacy.`
 
         const leftBtn = createButton('←', '#388e3c');
         const jumpBtn = createButton('↑', '#1976d2');
-        const tireBtn = createButton('🛞', '#f57c00');
         const throwBtn = createButton('🥏', '#ef6c00');
         const rightBtn = createButton('→', '#388e3c');
 
@@ -696,9 +692,6 @@ A tribute to Papa Sandy's legacy.`
             if (e) e.preventDefault();
             if (this.gameState === 'PLAYING') this.pushNearestTire();
         };
-        tireBtn.addEventListener('touchstart', tireAction);
-        tireBtn.addEventListener('mousedown', tireAction);
-
         const throwAction = (e) => {
             if (e) e.preventDefault();
             if (this.gameState === 'PLAYING') this.throwNearestTire();
@@ -751,7 +744,6 @@ A tribute to Papa Sandy's legacy.`
 
         controlPanel.appendChild(leftBtn);
         controlPanel.appendChild(jumpBtn);
-        controlPanel.appendChild(tireBtn);
         controlPanel.appendChild(throwBtn);
         controlPanel.appendChild(rightBtn);
 
@@ -771,7 +763,6 @@ A tribute to Papa Sandy's legacy.`
             left: leftBtn,
             right: rightBtn,
             jump: jumpBtn,
-            tire: tireBtn,
             throw: throwBtn,
             menu: menuBtn,
             resume: resumeBtn,
@@ -981,24 +972,10 @@ A tribute to Papa Sandy's legacy.`
     updateTires() {
         for (let tire of this.tires) {
             if (tire.pushed) {
-                // Update pushed/thrown tire physics
+                // Update thrown tire physics
                 tire.x += tire.velocityX;
-
-                if (tire.thrown) {
-                    tire.velocityY += this.gravity;
-                    tire.y += tire.velocityY;
-
-                    // Land and continue as rolling push
-                    if (tire.y + tire.height >= this.groundY) {
-                        tire.y = this.groundY - tire.height;
-                        tire.thrown = false;
-                        tire.velocityY = 0;
-                    }
-                } else {
-                    tire.velocityX *= 0.95; // Friction on ground
-                }
-
-                tire.pushTime--;
+                tire.velocityY += this.gravity;
+                tire.y += tire.velocityY;
 
                 // Tire impact on enemies
                 for (let enemy of this.enemies) {
@@ -1008,22 +985,24 @@ A tribute to Papa Sandy's legacy.`
                         tire.y < enemy.y + enemy.height &&
                         tire.y + tire.height > enemy.y) {
                         enemy.alive = false;
-                        this.score += tire.thrown ? 150 : 100;
+                        this.score += tire.thrown ? 150 : 150; // Always high damage for thrown tires
                     }
                 }
 
-                // Stop tire after push time or hitting wall
-                if (tire.pushTime <= 0 || tire.x <= 0 || tire.x + tire.width >= this.canvas.width) {
+                // Stop tire after hitting wall or landing
+                if (tire.x <= 0 || tire.x + tire.width >= this.canvas.width || tire.y + tire.height >= this.groundY) {
                     tire.pushed = false;
                     tire.thrown = false;
                     tire.velocityX = 0;
                     tire.velocityY = 0;
                     tire.pushTime = 0;
-                    tire.y = this.groundY - tire.height;
+                    if (tire.y + tire.height >= this.groundY) {
+                        tire.y = this.groundY - tire.height;
+                    }
                 }
             }
 
-            // Keep tires within horizontal bounds
+            // Keep tires within bounds
             if (tire.x < 0) tire.x = 0;
             if (tire.x + tire.width > this.canvas.width) {
                 tire.x = this.canvas.width - tire.width;
@@ -1408,8 +1387,8 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.lineWidth = 3;
         this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
         const controlsText = this.reducedEffects
-            ? 'Controls: Arrows/A,D Move | Space/W Jump | B Push | T Throw | M Music | [/] Vol | V FX ON/OFF'
-            : 'Controls: Arrows/A,D Move | Space/W Jump | B Push | T Throw | ESC Pause | M Music | [/] Vol | V FX LOW';
+            ? 'Controls: Arrows/A,D Move | Space/W Jump | T Throw | M Music | [/] Vol | V FX ON/OFF'
+            : 'Controls: Arrows/A,D Move | Space/W Jump | T Throw | ESC Pause | M Music | [/] Vol | V FX LOW';
         this.ctx.strokeText(controlsText, 12, this.canvas.height - 14);
         this.ctx.fillStyle = '#E0E0E0';
         this.ctx.fillText(controlsText, 12, this.canvas.height - 14);
@@ -1738,9 +1717,10 @@ A tribute to Papa Sandy's legacy.`
         this.gameState = 'PLAYING';
     }
     
-    getNearestAvailableTire(range = 90) {
+    getNearestAvailableTire() {
         let nearestTire = null;
         let minDistance = Infinity;
+        const range = 110; // Throw range
 
         for (let tire of this.tires) {
             if (!tire.pushed) {
@@ -1755,21 +1735,8 @@ A tribute to Papa Sandy's legacy.`
         return nearestTire;
     }
 
-    pushNearestTire() {
-        const nearestTire = this.getNearestAvailableTire();
-
-        if (nearestTire) {
-            nearestTire.pushed = true;
-            nearestTire.thrown = false;
-            nearestTire.velocityX = this.papaSandy.direction * 3;
-            nearestTire.velocityY = 0;
-            nearestTire.pushTime = 180; // 3 seconds
-            this.score += 50;
-        }
-    }
-
     throwNearestTire() {
-        const nearestTire = this.getNearestAvailableTire(110);
+        const nearestTire = this.getNearestAvailableTire();
 
         if (nearestTire) {
             nearestTire.pushed = true;
@@ -1777,7 +1744,7 @@ A tribute to Papa Sandy's legacy.`
             nearestTire.velocityX = this.papaSandy.direction * 5;
             nearestTire.velocityY = -8;
             nearestTire.pushTime = 210;
-            this.score += 75;
+            this.score += 100;
         }
     }
 
@@ -1837,10 +1804,9 @@ A tribute to Papa Sandy's legacy.`
             if (!tire.pushed) continue;
             if (tire.x < boss.x + boss.width && tire.x + tire.width > boss.x && tire.y < boss.y + boss.height && tire.y + tire.height > boss.y) {
                 if (boss.hurtCooldown <= 0) {
-                    const damage = tire.thrown ? 2 : 1;
-                    boss.health -= damage;
+                    boss.health -= 2;
                     boss.hurtCooldown = 20;
-                    this.score += damage * 200;
+                    this.score += 400;
                 }
                 tire.pushed = false;
                 tire.thrown = false;
@@ -2095,7 +2061,7 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.arc(82, 214, 5, 0, Math.PI * 2);
         this.ctx.fill();
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillText('Tire: B push / T throw', 100, 220);
+        this.ctx.fillText('Tire: T throw', 100, 220);
 
         this.ctx.fillStyle = '#FF6347';
         this.ctx.fillRect(70, 240, 24, 16);
