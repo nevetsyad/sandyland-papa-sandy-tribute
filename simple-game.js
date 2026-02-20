@@ -47,6 +47,7 @@ and defeating Dr.vette in the final showdown.
 How to win each world:
 ⭐ Collect 2 stars to unlock the next area
 🛞 Use tires: push (B) or throw (T)
+🐴 Use E for action: throw tire, mount/dismount horse, and nearby interact
 🦀 Enemies (crab/minion/coconut): avoid, stomp, or hit with tires
 
 Goal:
@@ -58,7 +59,8 @@ Press SPACE to continue!`,
 
 Papa Sandy: You
 ⭐ Star: collect 2 to clear worlds
-🛞 Tire: push (B) or throw (T)
+🛞 Tire: push (B), throw (T), or quick action (E)
+🐴 Horse/Gates: E to mount/dismount/interact (World 2)
 Crab/Minion/Coconut: avoid or defeat
 Power-ups: stars boost score
 White Corvette + Dr.vette: final boss cue
@@ -66,6 +68,7 @@ White Corvette + Dr.vette: final boss cue
 Controls:
 Move: Arrow keys / A,D
 Jump/Stomp: Space / W / Up
+Action/Interact: E
 Push tire: B
 Throw tire: T
 
@@ -89,7 +92,7 @@ Dr.vette's coconut bombs drop from above,
 and her loyal minions patrol the dusty plains.
 
 Use your tire-rolling skills strategically!
-Push tires to create bridges and defeat enemies.
+Mount your horse with E and ride through the horse gate.
 
 Press SPACE to continue!`,
 
@@ -143,6 +146,8 @@ A tribute to Papa Sandy's legacy.`
             velocityY: 0,
             speed: 4,
             jumpPower: 15,
+            mountedSpeedMultiplier: 1.6,
+            mountedJumpMultiplier: 1.25,
             onGround: true,
             direction: 1,
             health: 3,
@@ -156,7 +161,12 @@ A tribute to Papa Sandy's legacy.`
         this.enemies = [];
         this.powerUps = [];
         this.tires = [];
+        this.horses = [];
+        this.worldGates = [];
         this.backgroundElements = [];
+
+        this.mountRideHeight = 14;
+        this.mountedHorseId = null;
         
         this.initializeWorld(this.currentWorld);
         
@@ -325,6 +335,9 @@ A tribute to Papa Sandy's legacy.`
         this.enemies = [];
         this.powerUps = [];
         this.backgroundElements = [];
+        this.horses = [];
+        this.worldGates = [];
+        this.mountedHorseId = null;
         
         switch(worldNumber) {
             case 1: // Beach Paradise
@@ -442,6 +455,32 @@ A tribute to Papa Sandy's legacy.`
                     { x: 650, y: 310, scale: 0.8, type: 'cactus' },
                     { x: 350, y: 300, scale: 1.2, type: 'cactus' }
                 ];
+
+                this.horses = [
+                    {
+                        id: 'cowboy-horse-1',
+                        x: 120,
+                        y: this.groundY - 30,
+                        width: 56,
+                        height: 30,
+                        color: '#8B5A2B',
+                        facing: 1,
+                        mounted: false
+                    }
+                ];
+
+                this.worldGates = [
+                    {
+                        id: 'world2-horse-gate',
+                        x: 390,
+                        y: this.groundY - 220,
+                        width: 28,
+                        height: 220,
+                        requiresHorse: true,
+                        opened: false,
+                        color: '#6D4C41'
+                    }
+                ];
                 break;
                 
             case 3: // Tropical Jungle
@@ -549,7 +588,7 @@ A tribute to Papa Sandy's legacy.`
             
             // Handle jumping
             if ((e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') && this.papaSandy.onGround && this.gameState === 'PLAYING') {
-                this.papaSandy.velocityY = -this.papaSandy.jumpPower;
+                this.papaSandy.velocityY = -this.getCurrentJumpPower();
                 this.papaSandy.onGround = false;
             }
             
@@ -576,7 +615,15 @@ A tribute to Papa Sandy's legacy.`
                 this.musicMuted = false;
             }
             
-            // Handle tire throwing
+            // Universal action / interaction
+            if (e.code === 'KeyE' && this.gameState === 'PLAYING') {
+                this.handleActionPress();
+            }
+
+            // Keep legacy controls functional
+            if (e.code === 'KeyB' && this.gameState === 'PLAYING') {
+                this.pushNearestTire();
+            }
             if (e.code === 'KeyT' && this.gameState === 'PLAYING') {
                 this.throwNearestTire();
             }
@@ -647,7 +694,7 @@ A tribute to Papa Sandy's legacy.`
 
         const leftBtn = createButton('←', '#388e3c');
         const jumpBtn = createButton('↑', '#1976d2');
-        const throwBtn = createButton('🥏', '#ef6c00');
+        const throwBtn = createButton('E', '#ef6c00');
         const rightBtn = createButton('→', '#388e3c');
 
         const menuBtn = createButton('MENU', '#6a1b9a', '78px');
@@ -676,7 +723,7 @@ A tribute to Papa Sandy's legacy.`
         const jumpAction = (e) => {
             if (e) e.preventDefault();
             if (this.gameState === 'PLAYING' && this.papaSandy.onGround) {
-                this.papaSandy.velocityY = -this.papaSandy.jumpPower;
+                this.papaSandy.velocityY = -this.getCurrentJumpPower();
                 this.papaSandy.onGround = false;
             }
         };
@@ -689,7 +736,7 @@ A tribute to Papa Sandy's legacy.`
         };
         const throwAction = (e) => {
             if (e) e.preventDefault();
-            if (this.gameState === 'PLAYING') this.throwNearestTire();
+            if (this.gameState === 'PLAYING') this.handleActionPress();
         };
         throwBtn.addEventListener('touchstart', throwAction);
         throwBtn.addEventListener('mousedown', throwAction);
@@ -780,11 +827,12 @@ A tribute to Papa Sandy's legacy.`
         if (this.levelCompleted && !(this.bossBattle && this.bossBattle.active)) return;
         
         // Handle horizontal movement
+        const currentSpeed = this.getCurrentMoveSpeed();
         if (this.keys['ArrowLeft'] || this.keys['KeyA']) {
-            this.papaSandy.velocityX = -this.papaSandy.speed;
+            this.papaSandy.velocityX = -currentSpeed;
             this.papaSandy.direction = -1;
         } else if (this.keys['ArrowRight'] || this.keys['KeyD']) {
-            this.papaSandy.velocityX = this.papaSandy.speed;
+            this.papaSandy.velocityX = currentSpeed;
             this.papaSandy.direction = 1;
         } else {
             this.papaSandy.velocityX *= this.friction;
@@ -792,7 +840,7 @@ A tribute to Papa Sandy's legacy.`
         
         // Handle jumping
         if ((this.keys['Space'] || this.keys['ArrowUp'] || this.keys['KeyW']) && this.papaSandy.onGround) {
-            this.papaSandy.velocityY = -this.papaSandy.jumpPower;
+            this.papaSandy.velocityY = -this.getCurrentJumpPower();
             this.papaSandy.onGround = false;
         }
         
@@ -811,12 +859,16 @@ A tribute to Papa Sandy's legacy.`
             this.papaSandy.x = this.canvas.width - this.papaSandy.width;
         }
         
-        // Ground collision
-        if (this.papaSandy.y + this.papaSandy.height > this.groundY) {
-            this.papaSandy.y = this.groundY - this.papaSandy.height;
+        // Ground collision (mounted player sits slightly higher)
+        const groundLevel = this.groundY - (this.isMounted() ? this.mountRideHeight : 0);
+        if (this.papaSandy.y + this.papaSandy.height > groundLevel) {
+            this.papaSandy.y = groundLevel - this.papaSandy.height;
             this.papaSandy.velocityY = 0;
             this.papaSandy.onGround = true;
         }
+
+        this.updateHorseState();
+        this.updateGateCollisions();
         
         // Update enemies
         for (let enemy of this.enemies) {
@@ -1225,6 +1277,33 @@ A tribute to Papa Sandy's legacy.`
             this.drawBossScene();
         }
         
+        // Draw horse-required gates/obstacles
+        for (const gate of this.worldGates) {
+            if (gate.opened) continue;
+            this.ctx.fillStyle = gate.color || '#6D4C41';
+            this.ctx.fillRect(gate.x, gate.y, gate.width, gate.height);
+            this.ctx.fillStyle = '#3E2723';
+            this.ctx.fillRect(gate.x - 6, gate.y + 8, 6, gate.height - 8);
+            this.ctx.fillRect(gate.x + gate.width, gate.y + 8, 6, gate.height - 8);
+            this.ctx.fillStyle = '#FFF3E0';
+            this.ctx.font = '12px Courier New';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('HORSE', gate.x + gate.width / 2, gate.y - 6);
+        }
+
+        // Draw horses
+        for (const horse of this.horses) {
+            if (horse.mounted && this.mountedHorseId !== horse.id) continue;
+            this.ctx.fillStyle = horse.color || '#8B5A2B';
+            this.ctx.fillRect(horse.x, horse.y + 8, horse.width, horse.height - 8);
+            this.ctx.fillRect(horse.x + (horse.facing === 1 ? horse.width - 12 : 0), horse.y + 2, 12, 12);
+            this.ctx.fillRect(horse.x + 6, horse.y + horse.height - 2, 7, 10);
+            this.ctx.fillRect(horse.x + horse.width - 13, horse.y + horse.height - 2, 7, 10);
+            this.ctx.fillStyle = '#2E1A0F';
+            this.ctx.fillRect(horse.x + 3, horse.y + 10, 6, 4);
+            this.ctx.fillRect(horse.x + horse.width - 9, horse.y + 10, 6, 4);
+        }
+
         // Draw Papa Sandy (pixel-art sprite with simple animation states)
         this.drawPapaSandy();
 
@@ -1382,8 +1461,8 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.lineWidth = 3;
         this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
         const controlsText = this.reducedEffects
-            ? 'Controls: Arrows/A,D Move | Space/W Jump | T Throw | M Music | [/] Vol | V FX ON/OFF'
-            : 'Controls: Arrows/A,D Move | Space/W Jump | T Throw | ESC Pause | M Music | [/] Vol | V FX LOW';
+            ? 'Controls: Arrows/A,D Move | Space/W Jump | E Action/Interact | B Push | T Throw | M Music | [/] Vol | V FX ON/OFF'
+            : 'Controls: Arrows/A,D Move | Space/W Jump | E Action/Interact | B Push | T Throw | ESC Pause | M Music | [/] Vol | V FX LOW';
         this.ctx.strokeText(controlsText, 12, this.canvas.height - 14);
         this.ctx.fillStyle = '#E0E0E0';
         this.ctx.fillText(controlsText, 12, this.canvas.height - 14);
@@ -1623,6 +1702,8 @@ A tribute to Papa Sandy's legacy.`
         this.papaSandy.invulnerableTimer = 0;
         this.papaSandy.animationTimer = 0;
         this.papaSandy.animationState = 'idle';
+        this.mountedHorseId = null;
+        this.horses.forEach((horse) => { horse.mounted = false; });
         this.checkpoint = {
             x: this.papaSandy.x,
             y: this.papaSandy.y,
@@ -1638,6 +1719,8 @@ A tribute to Papa Sandy's legacy.`
         this.papaSandy.velocityY = 0;
         this.papaSandy.onGround = true;
         this.papaSandy.animationState = 'idle';
+        this.mountedHorseId = null;
+        this.horses.forEach((horse) => { horse.mounted = false; });
 
         this.checkpoint = {
             x: this.papaSandy.x,
@@ -1712,14 +1795,25 @@ A tribute to Papa Sandy's legacy.`
         this.gameState = 'PLAYING';
     }
     
-    getNearestAvailableTire() {
+    isMounted() {
+        return !!this.mountedHorseId;
+    }
+
+    getCurrentMoveSpeed() {
+        return this.papaSandy.speed * (this.isMounted() ? this.papaSandy.mountedSpeedMultiplier : 1);
+    }
+
+    getCurrentJumpPower() {
+        return this.papaSandy.jumpPower * (this.isMounted() ? this.papaSandy.mountedJumpMultiplier : 1);
+    }
+
+    getNearestAvailableTire(range = 110) {
         let nearestTire = null;
         let minDistance = Infinity;
-        const range = 110; // Throw range
 
         for (let tire of this.tires) {
             if (!tire.pushed) {
-                const distance = Math.abs(tire.x - this.papaSandy.x);
+                const distance = Math.abs((tire.x + tire.width / 2) - (this.papaSandy.x + this.papaSandy.width / 2));
                 if (distance < minDistance && distance < range) {
                     minDistance = distance;
                     nearestTire = tire;
@@ -1730,8 +1824,47 @@ A tribute to Papa Sandy's legacy.`
         return nearestTire;
     }
 
+    getNearestHorse(range = 70) {
+        let nearestHorse = null;
+        let minDistance = Infinity;
+        for (const horse of this.horses) {
+            const distance = Math.abs((horse.x + horse.width / 2) - (this.papaSandy.x + this.papaSandy.width / 2));
+            if (distance < minDistance && distance < range) {
+                minDistance = distance;
+                nearestHorse = horse;
+            }
+        }
+        return nearestHorse;
+    }
+
+    getNearestGate(range = 90) {
+        let nearestGate = null;
+        let minDistance = Infinity;
+        for (const gate of this.worldGates) {
+            if (gate.opened) continue;
+            const distance = Math.abs((gate.x + gate.width / 2) - (this.papaSandy.x + this.papaSandy.width / 2));
+            if (distance < minDistance && distance < range) {
+                minDistance = distance;
+                nearestGate = gate;
+            }
+        }
+        return nearestGate;
+    }
+
+    pushNearestTire() {
+        const nearestTire = this.getNearestAvailableTire(95);
+        if (!nearestTire) return false;
+
+        nearestTire.pushed = true;
+        nearestTire.thrown = false;
+        nearestTire.velocityX = this.papaSandy.direction * 4;
+        nearestTire.velocityY = 0;
+        nearestTire.pushTime = 160;
+        return true;
+    }
+
     throwNearestTire() {
-        const nearestTire = this.getNearestAvailableTire();
+        const nearestTire = this.getNearestAvailableTire(120);
 
         if (nearestTire) {
             nearestTire.pushed = true;
@@ -1740,9 +1873,104 @@ A tribute to Papa Sandy's legacy.`
             nearestTire.velocityY = -8;
             nearestTire.pushTime = 210;
             this.score += 100;
+            return true;
         }
+        return false;
     }
 
+    handleActionPress() {
+        if (this.tryMountOrDismount()) return;
+        if (this.interactWithNearbyObject()) return;
+        this.throwNearestTire();
+    }
+
+    tryMountOrDismount() {
+        if (this.isMounted()) {
+            const horse = this.horses.find((h) => h.id === this.mountedHorseId);
+            if (!horse) {
+                this.mountedHorseId = null;
+                return false;
+            }
+            horse.mounted = false;
+            horse.x = this.papaSandy.x + (this.papaSandy.direction * 26);
+            horse.facing = this.papaSandy.direction;
+            if (horse.x < 0) horse.x = 0;
+            if (horse.x + horse.width > this.canvas.width) horse.x = this.canvas.width - horse.width;
+            this.mountedHorseId = null;
+            this.papaSandy.y = this.groundY - this.papaSandy.height;
+            this.papaSandy.velocityY = 0;
+            this.papaSandy.onGround = true;
+            return true;
+        }
+
+        const nearbyHorse = this.getNearestHorse();
+        if (!nearbyHorse) return false;
+
+        this.mountedHorseId = nearbyHorse.id;
+        nearbyHorse.mounted = true;
+        nearbyHorse.facing = this.papaSandy.direction;
+        this.papaSandy.y = this.groundY - this.mountRideHeight - this.papaSandy.height;
+        this.papaSandy.velocityY = 0;
+        this.papaSandy.onGround = true;
+        return true;
+    }
+
+    interactWithNearbyObject() {
+        const nearbyGate = this.getNearestGate();
+        if (!nearbyGate) return false;
+
+        if (!nearbyGate.requiresHorse || this.isMounted()) {
+            nearbyGate.opened = true;
+            this.score += 50;
+            return true;
+        }
+        return false;
+    }
+
+    updateHorseState() {
+        if (!this.isMounted()) return;
+
+        const horse = this.horses.find((h) => h.id === this.mountedHorseId);
+        if (!horse) {
+            this.mountedHorseId = null;
+            return;
+        }
+
+        horse.mounted = true;
+        horse.facing = this.papaSandy.direction;
+        horse.x = this.papaSandy.x - (horse.width - this.papaSandy.width) / 2;
+        horse.y = this.groundY - horse.height;
+
+        if (horse.x < 0) horse.x = 0;
+        if (horse.x + horse.width > this.canvas.width) horse.x = this.canvas.width - horse.width;
+
+        this.papaSandy.y = Math.min(this.papaSandy.y, this.groundY - this.mountRideHeight - this.papaSandy.height);
+    }
+
+    updateGateCollisions() {
+        for (const gate of this.worldGates) {
+            if (gate.opened) continue;
+
+            const overlaps = this.papaSandy.x < gate.x + gate.width &&
+                this.papaSandy.x + this.papaSandy.width > gate.x &&
+                this.papaSandy.y < gate.y + gate.height &&
+                this.papaSandy.y + this.papaSandy.height > gate.y;
+
+            if (!overlaps) continue;
+
+            if (gate.requiresHorse && this.isMounted()) {
+                gate.opened = true;
+                continue;
+            }
+
+            if (this.papaSandy.velocityX > 0) {
+                this.papaSandy.x = gate.x - this.papaSandy.width;
+            } else if (this.papaSandy.velocityX < 0) {
+                this.papaSandy.x = gate.x + gate.width;
+            }
+            this.papaSandy.velocityX = 0;
+        }
+    }
 
     startBossBattle() {
         if (this.bossBattle && this.bossBattle.active) return;
@@ -2147,7 +2375,7 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.arc(82, 214, 10, 0, Math.PI * 2);
         this.ctx.stroke();
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillText('Tire: push (B) or throw (T)', 100, 220);
+        this.ctx.fillText('Tire: push (B), throw (T), quick action (E)', 100, 220);
 
         // Enemy strip: crab body/claws + minion aura block + coconut sphere
         this.ctx.fillStyle = '#FF6347'; // crab body
@@ -2197,8 +2425,8 @@ A tribute to Papa Sandy's legacy.`
         this.ctx.fillText('Final cue: White Corvette + Dr.vette boss', 180, 290);
 
         this.ctx.fillStyle = '#CFE8FF';
-        this.ctx.fillText('Controls: Move Arrows/A,D | Jump Space/W/Up | Stomp from above', 70, 350);
-        this.ctx.fillText('Mobile: Use on-screen buttons (← ↑ 🛞 🥏)', 70, 382);
+        this.ctx.fillText('Controls: Move Arrows/A,D | Jump Space/W/Up | Action E (mount/interact/throw)', 70, 350);
+        this.ctx.fillText('Mobile: Use on-screen buttons (← ↑ 🛞 E)', 70, 382);
 
         this.ctx.fillStyle = '#FFD700';
         this.ctx.font = 'bold 20px Courier New';
