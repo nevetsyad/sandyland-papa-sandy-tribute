@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bel ✨</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 40%, #1a1038 0%, #0b0620 45%, #04020f 100%);
+      font-family: "Trebuchet MS", "Comic Sans MS", system-ui, sans-serif;
+    }
+
+    .sparkle-text {
+      position: relative;
+      font-size: clamp(2.2rem, 8vw, 6.2rem);
+      font-weight: 900;
+      text-align: center;
+      letter-spacing: 0.04em;
+      text-transform: none;
+      background: linear-gradient(90deg, #fff7b1, #ffd6ff, #b8f7ff, #fff7b1);
+      background-size: 250% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: shimmer 4s linear infinite;
+      text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.65),
+        0 0 24px rgba(255, 184, 255, 0.65),
+        0 0 46px rgba(184, 247, 255, 0.45);
+      z-index: 2;
+      padding: 0.4em 0.7em;
+      border-radius: 20px;
+      backdrop-filter: blur(2px);
+    }
+
+    .sparkle-text::before,
+    .sparkle-text::after {
+      content: "✦ ✨ ✧ ✦";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.35em;
+      color: #fff3a5;
+      opacity: 0.9;
+      text-shadow: 0 0 8px rgba(255, 255, 180, 0.8);
+      animation: twinkle 1.8s ease-in-out infinite alternate;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .sparkle-text::before { top: -0.9em; }
+    .sparkle-text::after { bottom: -0.95em; animation-delay: 0.7s; }
+
+    canvas#fireworks {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 250% 50%; }
+    }
+
+    @keyframes twinkle {
+      from { transform: translateX(-50%) scale(0.9); opacity: 0.45; }
+      to { transform: translateX(-50%) scale(1.07); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fireworks"></canvas>
+  <div class="sparkle-text">vide coded for Bel</div>
+
+  <script>
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const particles = [];
+
+    function burst(x, y) {
+      const colors = ['#ffd166', '#ef476f', '#06d6a0', '#118ab2', '#f7b2ff', '#ffffff'];
+      const count = 55 + Math.floor(Math.random() * 25);
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1.4 + Math.random() * 4.2;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 55 + Math.random() * 35,
+          ttl: 55 + Math.random() * 35,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: 1.5 + Math.random() * 2.8,
+          gravity: 0.03 + Math.random() * 0.05
+        });
+      }
+    }
+
+    function loop() {
+      ctx.fillStyle = 'rgba(4,2,15,0.18)';
+      ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= 1;
+        p.vy += p.gravity;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        const alpha = Math.max(0, p.life / p.ttl);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(loop);
+    }
+
+    // Initial show + periodic fireworks
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => burst(120 + Math.random() * (innerWidth - 240), 120 + Math.random() * (innerHeight * 0.45)), i * 300);
+    }
+
+    setInterval(() => {
+      const x = 80 + Math.random() * (innerWidth - 160);
+      const y = 80 + Math.random() * (innerHeight * 0.55);
+      burst(x, y);
+    }, 850);
+
+    loop();
+  </script>
+</body>
+</html>
