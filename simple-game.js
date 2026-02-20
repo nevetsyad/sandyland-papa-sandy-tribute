@@ -2018,7 +2018,7 @@ A tribute to Papa Sandy's legacy.`
 
     drawSpinningCorvette(cx, y) {
         const t = this.storyTimer || 0;
-        const wheelSpin = -t * 0.35;
+        const wheelSpin = t * 0.35;
         const bob = Math.sin(t * 0.08) * 2;
 
         const carX = cx - 70;
