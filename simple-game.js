@@ -1926,8 +1926,8 @@ A tribute to Papa Sandy's legacy.`
         const lines = this.stories[this.storyMode].split('\n');
         const lineHeight = 25;
         const textHeight = lines.length * lineHeight;
-        // Full-screen cinematic scroll: start below the viewport and scroll past the top
-        this.storyMaxScroll = textHeight + this.canvas.height;
+        // Full-screen cinematic scroll: start well below the viewport and scroll past the top
+        this.storyMaxScroll = textHeight + this.canvas.height + 140;
     }
     
     updateStory() {
@@ -2005,8 +2005,8 @@ A tribute to Papa Sandy's legacy.`
         
         const storyLines = this.stories[this.storyMode].split('\n');
         const lineHeight = 30;
-        // Start noticeably lower on screen, then scroll upward continuously.
-        const startY = 220;
+        // Start off-screen below the viewport, then scroll upward continuously.
+        const startY = this.canvas.height + 60;
 
         for (let i = 0; i < storyLines.length; i++) {
             const lineY = startY + (i * lineHeight) - this.storyScrollY;
