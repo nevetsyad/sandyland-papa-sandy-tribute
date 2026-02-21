@@ -370,7 +370,7 @@ A tribute to Papa Sandy's legacy.`
                 
                 this.powerUps = [
                     {
-                        type: 'star',
+                        type: 'bullion',
                         x: 300,
                         y: this.groundY - 40,
                         width: 24,
@@ -379,7 +379,7 @@ A tribute to Papa Sandy's legacy.`
                         color: '#FFD700'
                     },
                     {
-                        type: 'star',
+                        type: 'bullion',
                         x: 500,
                         y: this.groundY - 40,
                         width: 24,
@@ -429,7 +429,7 @@ A tribute to Papa Sandy's legacy.`
                 
                 this.powerUps = [
                     {
-                        type: 'star',
+                        type: 'bullion',
                         x: 250,
                         y: this.groundY - 40,
                         width: 24,
@@ -438,7 +438,7 @@ A tribute to Papa Sandy's legacy.`
                         color: '#FFD700'
                     },
                     {
-                        type: 'star',
+                        type: 'bullion',
                         x: 550,
                         y: this.groundY - 40,
                         width: 24,
@@ -528,7 +528,7 @@ A tribute to Papa Sandy's legacy.`
                 
                 this.powerUps = [
                     {
-                        type: 'star',
+                        type: 'bullion',
                         x: 300,
                         y: this.groundY - 40,
                         width: 24,
@@ -537,7 +537,7 @@ A tribute to Papa Sandy's legacy.`
                         color: '#FFD700'
                     },
                     {
-                        type: 'star',
+                        type: 'bullion',
                         x: 500,
                         y: this.groundY - 40,
                         width: 24,
@@ -1397,17 +1397,14 @@ A tribute to Papa Sandy's legacy.`
             this.ctx.stroke();
         }
         
-        // Draw power-ups
+        // Draw power-ups (gold bullions)
         for (let powerUp of this.powerUps) {
             if (!powerUp.collected) {
-                this.ctx.fillStyle = powerUp.color;
-                this.ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
-                
-                // Draw star shape
+                // Remove background box - just draw the gold bullion emoji
                 this.ctx.fillStyle = '#FFFFFF';
-                this.ctx.font = '16px Courier New';
+                this.ctx.font = '20px Courier New';
                 this.ctx.textAlign = 'center';
-                this.ctx.fillText('🪙', powerUp.x + powerUp.width/2, powerUp.y + powerUp.height - 4);
+                this.ctx.fillText('🪙', powerUp.x + powerUp.width/2, powerUp.y + powerUp.height + 4);
             }
         }
         
@@ -1439,7 +1436,7 @@ A tribute to Papa Sandy's legacy.`
         }
 
         const collectedCount = this.powerUps.filter(p => p.collected).length;
-        drawHudText('Stars: ' + collectedCount + '/' + this.levelCompletionThreshold, 14, 122, '#FFE082', 18);
+        drawHudText('Bullions: ' + collectedCount + '/' + this.levelCompletionThreshold, 14, 122, '#FFE082', 18);
 
         if (this.bossBattle && this.bossBattle.active) {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
